@@ -22,15 +22,15 @@
 
 #include <random>
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/aten_compat.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir_dump_util.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/layout_manager.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ops/token.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/strided_slice_helpers.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/tensor.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/tensor_util.h"
-#include "tensorflow/core/util/mirror_pad_mode.h"
+#include "xla_tensor/aten_compat.h"
+#include "xla_tensor/helpers.h"
+#include "xla_tensor/ir_dump_util.h"
+#include "xla_tensor/layout_manager.h"
+#include "xla_tensor/ops/token.h"
+#include "xla_tensor/strided_slice_helpers.h"
+#include "xla_tensor/tensor.h"
+#include "xla_tensor/tensor_util.h"
+#include "xla/tf2xla/util/mirror_pad_mode.h"
 
 using swift_xla::XlaHelpers;
 using swift_xla::XLATensor;

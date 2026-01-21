@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "tensorflow/compiler/tf2xla/kernels/conv_op_helpers.h"
+#include "xla/tf2xla/kernels/conv_op_helpers.h"
 
 namespace swift_xla {
 namespace ir {

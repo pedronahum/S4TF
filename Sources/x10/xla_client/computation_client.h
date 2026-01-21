@@ -27,12 +27,12 @@
 #include "absl/container/node_hash_map.h"
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/xla_client/device.h"
-#include "tensorflow/compiler/xla/xla_client/metrics.h"
-#include "tensorflow/compiler/xla/xla_client/types.h"
-#include "tensorflow/compiler/xla/client/xla_computation.h"
-#include "tensorflow/compiler/xla/literal_util.h"
-#include "tensorflow/compiler/xla/types.h"
+#include "xla/xla_client/device.h"
+#include "xla/xla_client/metrics.h"
+#include "xla/xla_client/types.h"
+#include "xla/client/xla_computation.h"
+#include "xla/literal_util.h"
+#include "xla/types.h"
 
 namespace xla {
 

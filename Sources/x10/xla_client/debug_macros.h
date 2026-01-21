@@ -17,8 +17,8 @@
 #ifndef X10_XLA_CLIENT_DEBUG_MACROS_H_
 #define X10_XLA_CLIENT_DEBUG_MACROS_H_
 
-#include "tensorflow/compiler/xla/statusor.h"
-#include "tensorflow/compiler/xla/xla_client/tf_logging.h"
+#include "xla/statusor.h"
+#include "xla/xla_client/tf_logging.h"
 #include "tensorflow/core/platform/stacktrace.h"
 
 #define XLA_ERROR() TF_ERROR_STREAM()

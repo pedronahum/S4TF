@@ -1,7 +1,7 @@
-#include "tensorflow/compiler/tf2xla/xla_tensor/computation.h"
+#include "xla_tensor/computation.h"
 
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/util.h"
 
 namespace swift_xla {
 

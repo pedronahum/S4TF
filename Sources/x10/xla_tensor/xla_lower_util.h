@@ -20,8 +20,8 @@
 
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/client/xla_builder.h"
-#include "tensorflow/compiler/xla/xla_client/device.h"
+#include "xla/client/xla_builder.h"
+#include "xla/xla_client/device.h"
 
 namespace swift_xla {
 

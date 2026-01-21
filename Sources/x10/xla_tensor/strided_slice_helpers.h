@@ -19,7 +19,7 @@
 
 #include "absl/container/inlined_vector.h"
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/shape.h"
+#include "xla/shape.h"
 
 namespace swift_xla {
 

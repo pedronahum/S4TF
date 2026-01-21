@@ -17,7 +17,7 @@
 #ifndef X10_XLA_TENSOR_SEGMENT_REDUCTION_OPS_H_
 #define X10_XLA_TENSOR_SEGMENT_REDUCTION_OPS_H_
 
-#include "tensorflow/compiler/xla/client/xla_builder.h"
+#include "xla/client/xla_builder.h"
 
 namespace swift_xla {
 

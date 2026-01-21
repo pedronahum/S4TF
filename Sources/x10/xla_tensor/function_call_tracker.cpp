@@ -1,4 +1,4 @@
-#include "tensorflow/compiler/tf2xla/xla_tensor/function_call_tracker.h"
+#include "xla_tensor/function_call_tracker.h"
 
 #include <fstream>
 #include <limits>
@@ -9,9 +9,9 @@
 
 #include "absl/container/node_hash_set.h"
 #include "absl/strings/str_split.h"
-#include "tensorflow/compiler/xla/xla_client/sys_util.h"
+#include "xla/xla_client/sys_util.h"
 #include "tensorflow/core/platform/stacktrace.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/swift_backtrace.h"
+#include "xla_tensor/swift_backtrace.h"
 
 namespace swift_xla {
 namespace fn_tracker {

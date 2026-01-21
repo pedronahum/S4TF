@@ -17,7 +17,7 @@
 #ifndef X10_XLA_TENSOR_OPS_TF_BIT_GENERATOR_H_
 #define X10_XLA_TENSOR_OPS_TF_BIT_GENERATOR_H_
 
-#include "tensorflow/compiler/xla/client/lib/prng.h"
+#include "xla/client/lib/prng.h"
 
 namespace swift_xla {
 namespace ir {

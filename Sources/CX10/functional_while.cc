@@ -21,9 +21,9 @@
 #include "xla_tensor_wrapper.h"
 
 #include "absl/container/flat_hash_set.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/lowering_context.h"
+#include "xla_tensor/helpers.h"
+#include "xla_tensor/ir.h"
+#include "xla_tensor/lowering_context.h"
 
 using swift_xla::XLATensor;
 using swift_xla::ir::LoweringContext;

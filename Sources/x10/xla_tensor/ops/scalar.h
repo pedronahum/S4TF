@@ -18,9 +18,9 @@
 
 #include <iostream>
 
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/types.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/types.h"
+#include "xla_tensor/ir.h"
 
 namespace swift_xla {
 namespace ir {

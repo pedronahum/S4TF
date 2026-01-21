@@ -1,4 +1,4 @@
-#include "tensorflow/compiler/xla/xla_client/local_device.h"
+#include "xla/xla_client/local_device.h"
 
 #include <tuple>
 
@@ -6,11 +6,11 @@
 #include "absl/container/node_hash_set.h"
 #include "absl/strings/str_cat.h"
 #include "absl/synchronization/mutex.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/multi_wait.h"
-#include "tensorflow/compiler/xla/xla_client/thread_pool.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/xla/service/platform_util.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/multi_wait.h"
+#include "xla/xla_client/thread_pool.h"
+#include "xla/xla_client/util.h"
+#include "xla/service/platform_util.h"
 #include "tensorflow/core/profiler/lib/traceme.h"
 
 namespace xla {

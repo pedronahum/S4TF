@@ -17,8 +17,8 @@
 #pragma once
 
 #include "absl/types/optional.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/reduction.h"
-#include "tensorflow/compiler/xla/client/xla_builder.h"
+#include "xla_tensor/reduction.h"
+#include "xla/client/xla_builder.h"
 
 namespace swift_xla {
 

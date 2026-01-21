@@ -25,7 +25,7 @@
 #endif
 
 #ifdef __cplusplus
-#include "tensorflow/compiler/xla/xla_client/device.h"
+#include "xla/xla_client/device.h"
 
 extern "C" {
 #endif

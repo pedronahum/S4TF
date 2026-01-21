@@ -20,12 +20,12 @@
 #include <vector>
 
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/xla_client/async_task.h"
-#include "tensorflow/compiler/xla/xla_client/cache.h"
-#include "tensorflow/compiler/xla/xla_client/computation_client.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir.h"
-#include "tensorflow/compiler/xla/types.h"
+#include "xla/xla_client/async_task.h"
+#include "xla/xla_client/cache.h"
+#include "xla/xla_client/computation_client.h"
+#include "xla/xla_client/util.h"
+#include "xla_tensor/ir.h"
+#include "xla/types.h"
 
 namespace swift_xla {
 

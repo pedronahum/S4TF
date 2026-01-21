@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/strided_slice_helpers.h"
+#include "xla_tensor/strided_slice_helpers.h"
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/debug_util.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/tf2xla/shape_util.h"
+#include "xla_tensor/debug_util.h"
+#include "xla_tensor/helpers.h"
+#include "xla/tf2xla/shape_util.h"
 #include "tensorflow/core/common_runtime/dma_helper.h"
 #include "tensorflow/core/framework/tensor_shape.h"
 #include "tensorflow/core/util/strided_slice_op.h"

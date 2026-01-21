@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir.h"
-#include "tensorflow/compiler/xla/client/padding.h"
+#include "xla_tensor/ir.h"
+#include "xla/client/padding.h"
 
 namespace swift_xla {
 namespace ir {

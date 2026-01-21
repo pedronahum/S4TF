@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/xla/xla_client/mesh_service.h"
+#include "xla/xla_client/mesh_service.h"
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
@@ -34,14 +34,14 @@
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_join.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/mesh_service.grpc.pb.h"
-#include "tensorflow/compiler/xla/xla_client/multi_wait.h"
-#include "tensorflow/compiler/xla/xla_client/nccl_distributed.h"
-#include "tensorflow/compiler/xla/xla_client/sys_util.h"
-#include "tensorflow/compiler/xla/xla_client/thread_pool.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/xla/status.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/mesh_service.grpc.pb.h"
+#include "xla/xla_client/multi_wait.h"
+#include "xla/xla_client/nccl_distributed.h"
+#include "xla/xla_client/sys_util.h"
+#include "xla/xla_client/thread_pool.h"
+#include "xla/xla_client/util.h"
+#include "xla/status.h"
 
 namespace std {
 std::ostream& operator<<(std::ostream& ostrm, const ::grpc::Status& status) {

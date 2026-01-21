@@ -17,8 +17,8 @@
 #ifndef X10_XLA_CLIENT_FAKE_COMPUTATION_CLIENT_H_
 #define X10_XLA_CLIENT_FAKE_COMPUTATION_CLIENT_H_
 
-#include "tensorflow/compiler/xla/xla_client/computation_client.h"
-#include "tensorflow/compiler/xla/client/client_library.h"
+#include "xla/xla_client/computation_client.h"
+#include "xla/client/client_library.h"
 
 namespace xla {
 

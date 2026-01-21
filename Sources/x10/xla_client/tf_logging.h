@@ -19,7 +19,7 @@
 
 #include <sstream>
 
-#include "tensorflow/compiler/xla/status.h"
+#include "xla/status.h"
 #include "tensorflow/core/platform/logging.h"
 
 namespace xla {

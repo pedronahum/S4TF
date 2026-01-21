@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/types.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/types.h"
 #include "tensorflow/core/distributed_runtime/server_lib.h"
 
 namespace xla {

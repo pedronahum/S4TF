@@ -27,10 +27,10 @@
 #include <vector>
 
 #include "absl/types/span.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/aten_compat.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/swift_backtrace.h"
-#include "tensorflow/compiler/xla/client/xla_builder.h"
-#include "tensorflow/compiler/xla/xla_client/types.h"
+#include "xla_tensor/aten_compat.h"
+#include "xla_tensor/swift_backtrace.h"
+#include "xla/client/xla_builder.h"
+#include "xla/xla_client/types.h"
 #include "tensorflow/core/lib/gtl/inlined_vector.h"
 
 namespace swift_xla {
