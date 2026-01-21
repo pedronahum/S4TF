@@ -54,11 +54,237 @@
 #include "xla/pjrt/tpu/tpu_client.h"
 #endif
 
+// PJRT C API for loading pre-built plugins
+#include "xla/pjrt/c/pjrt_c_api.h"
+#include "xla/pjrt/pjrt_c_api_client.h"
+
+#include <dlfcn.h>
+#include <filesystem>
+#include <regex>
+
 namespace xla {
 
 using DataPtr = ComputationClient::DataPtr;
 using ComputationPtr = ComputationClient::ComputationPtr;
 using TensorSource = ComputationClient::TensorSource;
+
+namespace {
+
+// ============================================================================
+// Pre-built PJRT Plugin Discovery
+// ============================================================================
+// These functions help locate PJRT plugins from Python packages like JAX or
+// TensorFlow, allowing users to skip building C++ from source.
+
+// Known PJRT plugin library names for different backends
+struct PluginInfo {
+  std::string env_var;           // Environment variable override
+  std::vector<std::string> lib_names;  // Library file names to search for
+  std::string package_hint;      // Python package that contains this plugin
+};
+
+const std::map<std::string, PluginInfo>& GetPluginRegistry() {
+  static const std::map<std::string, PluginInfo> registry = {
+      {"cpu", {
+          "PJRT_CPU_LIBRARY_PATH",
+          {"pjrt_c_api_cpu_plugin.so", "libpjrt_c_api_cpu.so",
+           "pjrt_plugin_xla_cpu.so"},
+          "jax[cpu] or tensorflow"
+      }},
+      {"cuda", {
+          "PJRT_CUDA_LIBRARY_PATH",
+          {"pjrt_c_api_gpu_plugin.so", "libpjrt_c_api_gpu.so",
+           "pjrt_plugin_xla_cuda.so", "libxla_cuda.so"},
+          "jax[cuda] or tensorflow"
+      }},
+      {"gpu", {
+          "PJRT_GPU_LIBRARY_PATH",
+          {"pjrt_c_api_gpu_plugin.so", "libpjrt_c_api_gpu.so",
+           "pjrt_plugin_xla_cuda.so", "libxla_cuda.so"},
+          "jax[cuda] or tensorflow"
+      }},
+      {"tpu", {
+          "PJRT_TPU_LIBRARY_PATH",
+          {"libtpu.so", "pjrt_c_api_tpu_plugin.so"},
+          "libtpu or jax[tpu]"
+      }},
+      {"rocm", {
+          "PJRT_ROCM_LIBRARY_PATH",
+          {"pjrt_c_api_rocm_plugin.so", "libpjrt_c_api_rocm.so"},
+          "jax[rocm]"
+      }},
+  };
+  return registry;
+}
+
+// Get Python site-packages directories
+std::vector<std::string> GetPythonSitePackages() {
+  std::vector<std::string> paths;
+
+  // Try to run Python to get site-packages
+  FILE* pipe = popen("python3 -c 'import site; print(\"\\n\".join(site.getsitepackages()))' 2>/dev/null", "r");
+  if (pipe) {
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+      std::string path(buffer);
+      // Remove trailing newline
+      if (!path.empty() && path.back() == '\n') {
+        path.pop_back();
+      }
+      if (!path.empty()) {
+        paths.push_back(path);
+      }
+    }
+    pclose(pipe);
+  }
+
+  // Also check common paths
+  const char* home = getenv("HOME");
+  if (home) {
+    paths.push_back(std::string(home) + "/.local/lib/python3.10/site-packages");
+    paths.push_back(std::string(home) + "/.local/lib/python3.11/site-packages");
+    paths.push_back(std::string(home) + "/.local/lib/python3.12/site-packages");
+  }
+
+  // Check for conda environment
+  const char* conda_prefix = getenv("CONDA_PREFIX");
+  if (conda_prefix) {
+    paths.push_back(std::string(conda_prefix) + "/lib/python3.10/site-packages");
+    paths.push_back(std::string(conda_prefix) + "/lib/python3.11/site-packages");
+    paths.push_back(std::string(conda_prefix) + "/lib/python3.12/site-packages");
+  }
+
+  return paths;
+}
+
+// Search for a PJRT plugin library
+std::string FindPjrtPlugin(const std::string& platform) {
+  auto& registry = GetPluginRegistry();
+  auto it = registry.find(platform);
+  if (it == registry.end()) {
+    return "";  // Unknown platform
+  }
+
+  const PluginInfo& info = it->second;
+
+  // First, check environment variable override
+  const char* env_path = getenv(info.env_var.c_str());
+  if (env_path && std::filesystem::exists(env_path)) {
+    LOG(INFO) << "Using PJRT plugin from " << info.env_var << ": " << env_path;
+    return env_path;
+  }
+
+  // Check PJRT_PLUGIN_LIBRARY_PATH (generic override)
+  const char* generic_path = getenv("PJRT_PLUGIN_LIBRARY_PATH");
+  if (generic_path && std::filesystem::exists(generic_path)) {
+    LOG(INFO) << "Using PJRT plugin from PJRT_PLUGIN_LIBRARY_PATH: " << generic_path;
+    return generic_path;
+  }
+
+  // Search in Python site-packages
+  auto site_packages = GetPythonSitePackages();
+
+  // Directories to search within site-packages
+  std::vector<std::string> search_subdirs = {
+      "jaxlib",
+      "jaxlib/xla_extension",
+      "jax_plugins",
+      "jax_plugins/xla_cpu",
+      "jax_plugins/xla_cuda",
+      "tensorflow",
+      "tensorflow/compiler/tf2xla/python",
+      "tensorflow/python/_pywrap_tfe",
+      "xla",
+      "xla/pjrt",
+  };
+
+  for (const auto& site_pkg : site_packages) {
+    // Search directly in site-packages
+    for (const auto& lib_name : info.lib_names) {
+      std::string path = site_pkg + "/" + lib_name;
+      if (std::filesystem::exists(path)) {
+        LOG(INFO) << "Found PJRT plugin: " << path;
+        return path;
+      }
+    }
+
+    // Search in subdirectories
+    for (const auto& subdir : search_subdirs) {
+      for (const auto& lib_name : info.lib_names) {
+        std::string path = site_pkg + "/" + subdir + "/" + lib_name;
+        if (std::filesystem::exists(path)) {
+          LOG(INFO) << "Found PJRT plugin: " << path;
+          return path;
+        }
+      }
+    }
+  }
+
+  // Search in LD_LIBRARY_PATH
+  const char* ld_path = getenv("LD_LIBRARY_PATH");
+  if (ld_path) {
+    std::vector<std::string> ld_paths = absl::StrSplit(ld_path, ':');
+    for (const auto& dir : ld_paths) {
+      for (const auto& lib_name : info.lib_names) {
+        std::string path = std::string(dir) + "/" + lib_name;
+        if (std::filesystem::exists(path)) {
+          LOG(INFO) << "Found PJRT plugin in LD_LIBRARY_PATH: " << path;
+          return path;
+        }
+      }
+    }
+  }
+
+  return "";  // Not found
+}
+
+// Load a PJRT plugin and create a client
+std::unique_ptr<PjRtClient> LoadPjrtPlugin(const std::string& library_path) {
+  LOG(INFO) << "Loading PJRT plugin from: " << library_path;
+
+  // Load the shared library
+  void* handle = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
+  if (!handle) {
+    LOG(ERROR) << "Failed to load PJRT plugin: " << dlerror();
+    return nullptr;
+  }
+
+  // Look for the GetPjrtApi function
+  using GetPjrtApiFn = const PJRT_Api* (*)();
+  auto get_pjrt_api = reinterpret_cast<GetPjrtApiFn>(
+      dlsym(handle, "GetPjrtApi"));
+
+  if (!get_pjrt_api) {
+    LOG(ERROR) << "PJRT plugin does not export GetPjrtApi: " << dlerror();
+    dlclose(handle);
+    return nullptr;
+  }
+
+  // Get the PJRT API
+  const PJRT_Api* api = get_pjrt_api();
+  if (!api) {
+    LOG(ERROR) << "GetPjrtApi returned nullptr";
+    dlclose(handle);
+    return nullptr;
+  }
+
+  LOG(INFO) << "Loaded PJRT plugin with version: "
+            << api->pjrt_api_version.major_version << "."
+            << api->pjrt_api_version.minor_version;
+
+  // Create a PJRT C API client
+  auto status_or_client = GetCApiClient(api);
+  if (!status_or_client.ok()) {
+    LOG(ERROR) << "Failed to create PJRT C API client: "
+               << status_or_client.status();
+    // Note: We don't dlclose here because the API may be in use
+    return nullptr;
+  }
+
+  return std::move(status_or_client.value());
+}
+
+}  // namespace
 
 // PJRT Device implementation
 class PjRtComputationClient::PjRtDevice : public ComputationClient::Device {
@@ -148,6 +374,31 @@ void PjRtComputationClient::InitializeClient() {
 
   LOG(INFO) << "Initializing PJRT client for platform: " << platform;
 
+  // Check if we should try to use pre-built plugins
+  bool use_prebuilt = sys_util::GetEnvBool("XLA_USE_PREBUILT_PJRT", true);
+
+  if (use_prebuilt) {
+    // Try to find and load a pre-built PJRT plugin from Python packages
+    std::string plugin_path = FindPjrtPlugin(platform);
+    if (!plugin_path.empty()) {
+      pjrt_client_ = LoadPjrtPlugin(plugin_path);
+      if (pjrt_client_) {
+        LOG(INFO) << "Successfully loaded pre-built PJRT plugin for platform: "
+                  << platform;
+        LOG(INFO) << "PJRT client created from plugin: "
+                  << pjrt_client_->platform_name();
+        return;
+      }
+      LOG(WARNING) << "Failed to load PJRT plugin, falling back to compiled-in backend";
+    } else {
+      LOG(INFO) << "No pre-built PJRT plugin found for platform: " << platform
+                << ". Install jax or tensorflow, or set PJRT_*_LIBRARY_PATH";
+    }
+  }
+
+  // Fall back to compiled-in backends
+  LOG(INFO) << "Using compiled-in PJRT backend for platform: " << platform;
+
   if (platform == "cpu") {
 #ifdef XLA_CPU_BACKEND
     CpuClientOptions cpu_options;
@@ -157,7 +408,12 @@ void PjRtComputationClient::InitializeClient() {
         << "Failed to create CPU PJRT client: " << status_or_client.status();
     pjrt_client_ = std::move(status_or_client.value());
 #else
-    XLA_CHECK(false) << "CPU backend not compiled in";
+    auto& registry = GetPluginRegistry();
+    auto it = registry.find("cpu");
+    XLA_CHECK(false) << "CPU backend not compiled in. "
+                     << "Install a pre-built PJRT plugin ("
+                     << (it != registry.end() ? it->second.package_hint : "jax or tensorflow")
+                     << ") or build with XLA_CPU_BACKEND=1";
 #endif
   } else if (platform == "gpu" || platform == "cuda") {
 #ifdef XLA_GPU_BACKEND
@@ -167,7 +423,12 @@ void PjRtComputationClient::InitializeClient() {
         << "Failed to create GPU PJRT client: " << status_or_client.status();
     pjrt_client_ = std::move(status_or_client.value());
 #else
-    XLA_CHECK(false) << "GPU backend not compiled in";
+    auto& registry = GetPluginRegistry();
+    auto it = registry.find("gpu");
+    XLA_CHECK(false) << "GPU backend not compiled in. "
+                     << "Install a pre-built PJRT plugin ("
+                     << (it != registry.end() ? it->second.package_hint : "jax[cuda] or tensorflow")
+                     << ") or build with XLA_GPU_BACKEND=1";
 #endif
   } else if (platform == "tpu") {
 #ifdef XLA_TPU_BACKEND
@@ -176,10 +437,23 @@ void PjRtComputationClient::InitializeClient() {
         << "Failed to create TPU PJRT client: " << status_or_client.status();
     pjrt_client_ = std::move(status_or_client.value());
 #else
-    XLA_CHECK(false) << "TPU backend not compiled in";
+    auto& registry = GetPluginRegistry();
+    auto it = registry.find("tpu");
+    XLA_CHECK(false) << "TPU backend not compiled in. "
+                     << "Install a pre-built PJRT plugin ("
+                     << (it != registry.end() ? it->second.package_hint : "libtpu or jax[tpu]")
+                     << ") or build with XLA_TPU_BACKEND=1";
 #endif
+  } else if (platform == "rocm") {
+    // ROCm/AMD GPU - only available via plugin
+    auto& registry = GetPluginRegistry();
+    auto it = registry.find("rocm");
+    XLA_CHECK(false) << "ROCm backend requires a pre-built PJRT plugin. "
+                     << "Install " << (it != registry.end() ? it->second.package_hint : "jax[rocm]")
+                     << " and set PJRT_ROCM_LIBRARY_PATH";
   } else {
-    XLA_CHECK(false) << "Unknown platform: " << platform;
+    XLA_CHECK(false) << "Unknown platform: " << platform
+                     << ". Supported platforms: cpu, gpu, cuda, tpu, rocm";
   }
 
   LOG(INFO) << "PJRT client created for platform: "

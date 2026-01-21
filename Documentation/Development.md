@@ -184,6 +184,116 @@ For more details, see the [OpenXLA Migration Guide](../docs/OPENXLA_MIGRATION.md
 
 ---
 
+## Using Pre-built PJRT Plugins (Easiest)
+
+Instead of building the X10 C++ library from source, you can leverage pre-built
+PJRT plugins from Python packages like JAX or TensorFlow. This is the easiest
+way to get started, especially for GPU/TPU support.
+
+### How It Works
+
+X10 automatically searches for PJRT plugins in the following locations:
+
+1. Environment variables (e.g., `PJRT_CPU_LIBRARY_PATH`)
+2. Python site-packages (JAX, TensorFlow installations)
+3. `LD_LIBRARY_PATH` directories
+
+### Quick Start with JAX
+
+```bash
+# Install JAX with CPU support
+pip install jax[cpu]
+
+# Or for CUDA GPU support
+pip install jax[cuda12]
+
+# The X10 library will automatically find and use JAX's PJRT plugin
+export XLA_PLATFORM=cpu  # or "cuda" for GPU
+```
+
+### Quick Start with TensorFlow
+
+```bash
+# Install TensorFlow (includes PJRT plugin)
+pip install tensorflow
+
+# For GPU support
+pip install tensorflow[and-cuda]
+
+export XLA_PLATFORM=cpu  # or "cuda" for GPU
+```
+
+### Finding PJRT Plugins
+
+Use the included helper script to find available plugins:
+
+```bash
+# Find all available plugins
+python scripts/find_pjrt_plugin.py
+
+# Find plugin for specific platform
+python scripts/find_pjrt_plugin.py cpu
+python scripts/find_pjrt_plugin.py cuda
+python scripts/find_pjrt_plugin.py tpu
+```
+
+The script will output the plugin path and shell commands to set up your environment.
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `XLA_PLATFORM` | Target platform | `cpu`, `cuda`, `gpu`, `tpu`, `rocm` |
+| `XLA_USE_PREBUILT_PJRT` | Enable/disable plugin loading | `true` (default) or `false` |
+| `PJRT_CPU_LIBRARY_PATH` | Override CPU plugin path | `/path/to/pjrt_cpu.so` |
+| `PJRT_CUDA_LIBRARY_PATH` | Override CUDA plugin path | `/path/to/pjrt_gpu.so` |
+| `PJRT_GPU_LIBRARY_PATH` | Override GPU plugin path | `/path/to/pjrt_gpu.so` |
+| `PJRT_TPU_LIBRARY_PATH` | Override TPU plugin path | `/path/to/libtpu.so` |
+| `PJRT_PLUGIN_LIBRARY_PATH` | Generic plugin override | `/path/to/plugin.so` |
+
+### Supported Python Packages
+
+| Package | CPU | CUDA GPU | ROCm GPU | TPU |
+|---------|-----|----------|----------|-----|
+| JAX (`jax[cpu]`) | Yes | - | - | - |
+| JAX (`jax[cuda12]`) | Yes | Yes | - | - |
+| JAX (`jax[rocm]`) | Yes | - | Yes | - |
+| JAX (`jax[tpu]`) | Yes | - | - | Yes |
+| TensorFlow | Yes | - | - | - |
+| TensorFlow (`tensorflow[and-cuda]`) | Yes | Yes | - | - |
+
+### Example: Full Setup
+
+```bash
+# 1. Install JAX with CUDA support
+pip install jax[cuda12]
+
+# 2. Find the PJRT plugin
+python scripts/find_pjrt_plugin.py cuda
+
+# 3. Set up environment (use output from step 2)
+export PJRT_CUDA_LIBRARY_PATH="/path/from/step/2"
+export XLA_PLATFORM="cuda"
+
+# 4. Build Swift APIs (X10 will use the pre-built plugin)
+cmake -B build -G Ninja -S .
+cmake --build build
+```
+
+### Disabling Pre-built Plugin Loading
+
+If you want to force X10 to use compiled-in backends instead of pre-built
+plugins, set:
+
+```bash
+export XLA_USE_PREBUILT_PJRT=false
+```
+
+This is useful when you've built X10 with specific backend support and want to
+ensure those backends are used.
+
+---
+
 ## Building With CMake (Legacy)
 
 With CMake, X10 and Swift APIs can be built either together or separately.

@@ -125,6 +125,24 @@ bazel build --config=openxla //xla_tensor:x10
 bazel build --config=openxla --config=cuda //xla_tensor:x10
 ```
 
+#### Using Pre-built PJRT Plugins (Easiest)
+
+Instead of building from source, you can use pre-built PJRT plugins from JAX or TensorFlow:
+
+```bash
+# Install JAX (provides PJRT plugins)
+pip install jax[cpu]       # For CPU
+pip install jax[cuda12]    # For CUDA GPU
+
+# X10 will automatically find and use the PJRT plugin
+export XLA_PLATFORM=cpu    # or "cuda" for GPU
+
+# Find available plugins
+python scripts/find_pjrt_plugin.py
+```
+
+See [Using Pre-built PJRT Plugins](Documentation/Development.md#using-pre-built-pjrt-plugins-easiest) for details.
+
 ## Bugs
 
 Please report bugs and feature requests using GitHub issues in this repository.
