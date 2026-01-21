@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 
-#include "tensorflow/compiler/xla/client/xla_builder.h"
-#include "tensorflow/compiler/xla/client/xla_computation.h"
-#include "tensorflow/compiler/xla/xla_client/types.h"
+#include "xla/client/xla_builder.h"
+#include "xla/client/xla_computation.h"
+#include "xla/xla_client/types.h"
 
 namespace swift_xla {
 

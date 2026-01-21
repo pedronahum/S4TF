@@ -1,16 +1,16 @@
-#include "tensorflow/compiler/tf2xla/xla_tensor/nms_op.h"
+#include "xla_tensor/nms_op.h"
 
 #include <limits>
 
-#include "tensorflow/compiler/xla/client/lib/arithmetic.h"
-#include "tensorflow/compiler/xla/client/lib/comparators.h"
-#include "tensorflow/compiler/xla/client/lib/constants.h"
-#include "tensorflow/compiler/xla/client/lib/loops.h"
-#include "tensorflow/compiler/xla/client/lib/sorting.h"
-#include "tensorflow/compiler/xla/util.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
+#include "xla/client/lib/arithmetic.h"
+#include "xla/client/lib/comparators.h"
+#include "xla/client/lib/constants.h"
+#include "xla/client/lib/loops.h"
+#include "xla/client/lib/sorting.h"
+#include "xla/util.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/util.h"
+#include "xla_tensor/helpers.h"
 
 // Code extracted from:
 // https://github.com/tensorflow/tensorflow/blob/dc4c6d305ba3d2de4a795ec77b483b0fa695b9ee/tensorflow/compiler/tf2xla/kernels/image_ops.cc#L399

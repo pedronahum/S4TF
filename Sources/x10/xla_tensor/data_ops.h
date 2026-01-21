@@ -20,8 +20,8 @@
 
 #include "absl/types/optional.h"
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/client/xla_builder.h"
-#include "tensorflow/core/util/mirror_pad_mode.h"
+#include "xla/client/xla_builder.h"
+#include "xla/xla_client/tf_compat.h"
 
 // Collection of XLA lowerings for operations which only involve some form of
 // data movement and no computation.

@@ -89,6 +89,73 @@ For more models, go to [**tensorflow/swift-models**][swift-models].
 
 Documentation covering development can be found in the [Developer Guide](Documentation/Development.md).
 
+### OpenXLA Migration
+
+X10 has been migrated from TensorFlow's XLA to standalone [OpenXLA](https://github.com/openxla/xla).
+This provides cleaner dependencies and uses the modern PJRT runtime. See
+[OpenXLA Migration Guide](docs/OPENXLA_MIGRATION.md) for details.
+
+**Important: The Swift API is unchanged.** Your existing Swift code will work exactly as before:
+
+```swift
+import TensorFlow
+
+// Same API - just works!
+let device = Device(kind: .GPU, ordinal: 0, backend: .XLA)
+let tensor = Tensor<Float>(randomNormal: [1024, 1024], on: device)
+let result = matmul(tensor, tensor)
+LazyTensorBarrier()  // Triggers XLA compilation via PJRT
+```
+
+The migration only affects the C++ backend - PJRT replaces XRT internally.
+
+#### Quick Start with OpenXLA
+
+```bash
+# Prerequisites: Bazel 6.0+, C++17 compiler
+
+# Clone and build
+git clone https://github.com/tensorflow/swift-apis
+cd swift-apis
+
+# Build X10 with OpenXLA (CPU)
+bazel build --config=openxla //xla_tensor:x10
+
+# Build with GPU support
+bazel build --config=openxla --config=cuda //xla_tensor:x10
+```
+
+#### Using Pre-built PJRT Plugins (Easiest)
+
+Instead of building from source, you can use pre-built PJRT plugins from JAX or TensorFlow:
+
+```bash
+# Install JAX (provides PJRT plugins)
+pip install jax[cpu]       # For CPU
+pip install jax[cuda12]    # For CUDA GPU
+
+# X10 will automatically find and use the PJRT plugin
+export XLA_PLATFORM=cpu    # or "cuda" for GPU
+
+# Find available plugins
+python scripts/find_pjrt_plugin.py
+```
+
+See [Using Pre-built PJRT Plugins](Documentation/Development.md#using-pre-built-pjrt-plugins-easiest) for details.
+
+#### Building with Swift Package Manager
+
+```bash
+# Setup SPM environment
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+source ~/.local/setup_env.sh
+
+# Build
+swift build
+```
+
+See [Building With Swift Package Manager](Documentation/Development.md#building-with-swift-package-manager-recommended) for details.
+
 ## Bugs
 
 Please report bugs and feature requests using GitHub issues in this repository.

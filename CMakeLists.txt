@@ -167,7 +167,7 @@ if(NOT X10_FOUND AND NOT USE_BUNDLED_X10)
     GIT_REPOSITORY
       git://github.com/tensorflow/tensorflow
     GIT_TAG
-      r2.4
+      r2.20
     UPDATE_DISCONNECTED
       TRUE
     CONFIGURE_COMMAND

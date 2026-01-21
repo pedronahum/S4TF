@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/xla/xla_client/computation_client.h"
+#include "xla/xla_client/computation_client.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -24,11 +24,11 @@
 #include "absl/memory/memory.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/str_split.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/mesh_service.h"
-#include "tensorflow/compiler/xla/xla_client/sys_util.h"
-#include "tensorflow/compiler/xla/status_macros.h"
-#include "tensorflow/core/util/device_name_utils.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/mesh_service.h"
+#include "xla/xla_client/sys_util.h"
+#include "xla/status_macros.h"
+#include "xla/xla_client/tf_compat.h"
 
 namespace xla {
 

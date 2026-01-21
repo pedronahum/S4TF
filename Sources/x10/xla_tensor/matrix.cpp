@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/matrix.h"
+#include "xla_tensor/matrix.h"
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/convert_ops.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/xla/client/lib/constants.h"
-#include "tensorflow/compiler/xla/client/lib/matrix.h"
-#include "tensorflow/compiler/xla/client/lib/qr.h"
-#include "tensorflow/compiler/xla/shape_util.h"
-#include "tensorflow/compiler/xla/util.h"
+#include "xla_tensor/convert_ops.h"
+#include "xla_tensor/helpers.h"
+#include "xla/client/lib/constants.h"
+#include "xla/client/lib/matrix.h"
+#include "xla/client/lib/qr.h"
+#include "xla/shape_util.h"
+#include "xla/util.h"
 
 namespace swift_xla {
 namespace {

@@ -20,7 +20,7 @@
 #include <iostream>
 #include <string>
 
-#include "tensorflow/compiler/xla/xla_client/util.h"
+#include "xla/xla_client/util.h"
 
 namespace swift_xla {
 

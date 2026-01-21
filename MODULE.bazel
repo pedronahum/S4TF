@@ -1,0 +1,48 @@
+# MODULE.bazel for X10 OpenXLA Migration
+# This file configures Bazel with bzlmod (the newer module system)
+# for building X10 with standalone OpenXLA.
+
+module(
+    name = "x10",
+    version = "0.1.0",
+    compatibility_level = 1,
+)
+
+# ============================================================================
+# OpenXLA Dependency
+# ============================================================================
+
+bazel_dep(name = "xla")
+
+# Override to use git version until XLA is published to BCR
+git_override(
+    module_name = "xla",
+    remote = "https://github.com/openxla/xla.git",
+    # Use a specific commit for reproducibility
+    # commit = "abc123...",
+    branch = "main",
+)
+
+# ============================================================================
+# Core Dependencies
+# ============================================================================
+
+bazel_dep(name = "abseil-cpp", version = "20230802.1")
+bazel_dep(name = "protobuf", version = "25.1")
+bazel_dep(name = "grpc", version = "1.59.2")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+bazel_dep(name = "rules_proto", version = "5.3.0-21.7")
+bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "bazel_skylib", version = "1.5.0")
+
+# ============================================================================
+# Toolchain Configuration
+# ============================================================================
+
+# C++ toolchain
+bazel_dep(name = "toolchains_llvm", version = "1.0.0", dev_dependency = True)
+
+# Register CUDA toolchain for GPU support
+register_toolchains(
+    "@local_config_cuda//cuda:toolchain",
+)

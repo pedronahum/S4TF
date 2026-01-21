@@ -28,8 +28,8 @@
 #endif
 
 #ifdef __cplusplus
-#include "tensorflow/compiler/tf2xla/xla_tensor/tensor.h"
-#include "tensorflow/core/profiler/lib/traceme.h"
+#include "xla_tensor/tensor.h"
+#include "tf_compat.h"  // OpenXLA compatibility layer for TF types
 using OpaqueMaterializedTensor = at::Tensor;
 using OpaqueXLATensor = swift_xla::XLATensor;
 using OpaqueXLAShape = xla::util::MaybeRef<xla::Shape>;

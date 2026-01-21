@@ -17,7 +17,7 @@
 #ifndef X10_XLA_CLIENT_SYS_UTIL_H_
 #define X10_XLA_CLIENT_SYS_UTIL_H_
 
-#include "tensorflow/compiler/xla/types.h"
+#include "xla/types.h"
 
 namespace xla {
 namespace sys_util {

@@ -8,6 +8,17 @@ Swift for TensorFlow APIs can be built with either:
 
 * CMake 3.16 or later from [cmake.org][cmake]
 * Swift Package Manager (included in the above toolchain)
+* Bazel 6.0 or later (for OpenXLA builds)
+
+## Build Options
+
+There are two ways to build X10:
+
+1. **OpenXLA Build (Recommended)**: Uses standalone OpenXLA with PJRT runtime
+2. **Legacy TensorFlow Build**: Uses TensorFlow's bundled XLA with XRT runtime
+
+For new development, the OpenXLA build is recommended as it provides cleaner
+dependencies and uses the modern PJRT runtime.
 
 ## Components
 
@@ -37,10 +48,410 @@ Building Swift for TensorFlow APIs involves two distinct components:
 
 The two components can be built together (CMake only) or separately.
 
-Follow the instructions below based on your preferred build tool (CMake or
-SwiftPM).
+Follow the instructions below based on your preferred build tool.
 
-## Building With CMake
+---
+
+## Building With OpenXLA (Recommended)
+
+The recommended way to build X10 is with standalone OpenXLA using Bazel. This
+approach uses the modern PJRT runtime and doesn't require a full TensorFlow build.
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Bazel | 6.0+ | Install via [Bazelisk][bazelisk] (recommended) |
+| C++ Compiler | C++17 support | GCC 9+, Clang 10+, or MSVC 2019+ |
+| Python | 3.8+ | With pip |
+| Git | 2.x | For fetching dependencies |
+
+**Optional for GPU/TPU:**
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| CUDA | 11.8+ | For NVIDIA GPU support |
+| cuDNN | 8.6+ | For NVIDIA GPU support |
+| ROCm | 5.0+ | For AMD GPU support |
+| Cloud TPU | - | For TPU support |
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/tensorflow/swift-apis
+cd swift-apis
+
+# Build X10 with CPU support
+bazel build //xla_tensor:x10
+
+# Run tests
+bazel test //xla_tensor:all
+```
+
+### Build Configurations
+
+#### CPU-Only Build
+
+```bash
+bazel build //xla_tensor:x10
+```
+
+#### GPU Build (CUDA)
+
+```bash
+# Set environment variables
+export TF_NEED_CUDA=1
+export CUDA_TOOLKIT_PATH=/usr/local/cuda
+export CUDNN_INSTALL_PATH=/usr/local/cuda
+
+# Build with CUDA support
+bazel build --config=cuda //xla_tensor:x10
+```
+
+#### GPU Build (ROCm)
+
+```bash
+# Set environment variables
+export TF_NEED_ROCM=1
+export ROCM_PATH=/opt/rocm
+
+# Build with ROCm support
+bazel build --config=rocm //xla_tensor:x10
+```
+
+#### TPU Build
+
+```bash
+# Build with TPU support
+bazel build --config=tpu //xla_tensor:x10
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `XLA_PLATFORM` | Platform to use: "cpu", "gpu", "tpu" | "cpu" |
+| `XLA_DEFAULT_DEVICE` | Default device (e.g., "GPU:0") | Auto-detected |
+| `XLA_CPU_DEVICE_COUNT` | Number of CPU devices | 1 |
+
+### Build Targets
+
+| Target | Description |
+|--------|-------------|
+| `//xla_tensor:x10` | Main X10 shared library |
+| `//xla_tensor:tensor` | X10 tensor library (static) |
+| `//xla_client:pjrt_computation_client` | PJRT-based computation client |
+| `//xla_client:xla_client_util` | XLA client utilities |
+
+### Using Different PJRT Backends
+
+The build system provides different computation client variants:
+
+```bash
+# CPU backend (default)
+bazel build //xla_client:pjrt_computation_client
+
+# GPU backend
+bazel build //xla_client:pjrt_computation_client_gpu
+
+# TPU backend
+bazel build //xla_client:pjrt_computation_client_tpu
+```
+
+### Troubleshooting OpenXLA Builds
+
+**Bazel version mismatch:**
+```bash
+# Use Bazelisk to automatically get the right version
+npm install -g @bazel/bazelisk
+# Or download from https://github.com/bazelbuild/bazelisk
+```
+
+**Missing CUDA libraries:**
+```bash
+# Ensure CUDA paths are set
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+```
+
+**Out of memory during build:**
+```bash
+# Limit Bazel's parallelism
+bazel build --jobs=4 //xla_tensor:x10
+```
+
+For more details, see the [OpenXLA Migration Guide](../docs/OPENXLA_MIGRATION.md).
+
+---
+
+## Using Pre-built PJRT Plugins (Easiest)
+
+Instead of building the X10 C++ library from source, you can leverage pre-built
+PJRT plugins from Python packages like JAX or TensorFlow. This is the easiest
+way to get started, especially for GPU/TPU support.
+
+### How It Works
+
+X10 automatically searches for PJRT plugins in the following locations:
+
+1. Environment variables (e.g., `PJRT_CPU_LIBRARY_PATH`)
+2. Python site-packages (JAX, TensorFlow installations)
+3. `LD_LIBRARY_PATH` directories
+
+### Quick Start with JAX
+
+```bash
+# Install JAX with CPU support
+pip install jax[cpu]
+
+# Or for CUDA GPU support
+pip install jax[cuda12]
+
+# The X10 library will automatically find and use JAX's PJRT plugin
+export XLA_PLATFORM=cpu  # or "cuda" for GPU
+```
+
+### Quick Start with TensorFlow
+
+```bash
+# Install TensorFlow (includes PJRT plugin)
+pip install tensorflow
+
+# For GPU support
+pip install tensorflow[and-cuda]
+
+export XLA_PLATFORM=cpu  # or "cuda" for GPU
+```
+
+### Finding PJRT Plugins
+
+Use the included helper script to find available plugins:
+
+```bash
+# Find all available plugins
+python scripts/find_pjrt_plugin.py
+
+# Find plugin for specific platform
+python scripts/find_pjrt_plugin.py cpu
+python scripts/find_pjrt_plugin.py cuda
+python scripts/find_pjrt_plugin.py tpu
+```
+
+The script will output the plugin path and shell commands to set up your environment.
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `XLA_PLATFORM` | Target platform | `cpu`, `cuda`, `gpu`, `tpu`, `rocm` |
+| `XLA_USE_PREBUILT_PJRT` | Enable/disable plugin loading | `true` (default) or `false` |
+| `PJRT_CPU_LIBRARY_PATH` | Override CPU plugin path | `/path/to/pjrt_cpu.so` |
+| `PJRT_CUDA_LIBRARY_PATH` | Override CUDA plugin path | `/path/to/pjrt_gpu.so` |
+| `PJRT_GPU_LIBRARY_PATH` | Override GPU plugin path | `/path/to/pjrt_gpu.so` |
+| `PJRT_TPU_LIBRARY_PATH` | Override TPU plugin path | `/path/to/libtpu.so` |
+| `PJRT_PLUGIN_LIBRARY_PATH` | Generic plugin override | `/path/to/plugin.so` |
+
+### Supported Python Packages
+
+| Package | CPU | CUDA GPU | ROCm GPU | TPU |
+|---------|-----|----------|----------|-----|
+| JAX (`jax[cpu]`) | Yes | - | - | - |
+| JAX (`jax[cuda12]`) | Yes | Yes | - | - |
+| JAX (`jax[rocm]`) | Yes | - | Yes | - |
+| JAX (`jax[tpu]`) | Yes | - | - | Yes |
+| TensorFlow | Yes | - | - | - |
+| TensorFlow (`tensorflow[and-cuda]`) | Yes | Yes | - | - |
+
+### Example: Full Setup
+
+```bash
+# 1. Install JAX with CUDA support
+pip install jax[cuda12]
+
+# 2. Find the PJRT plugin
+python scripts/find_pjrt_plugin.py cuda
+
+# 3. Set up environment (use output from step 2)
+export PJRT_CUDA_LIBRARY_PATH="/path/from/step/2"
+export XLA_PLATFORM="cuda"
+
+# 4. Build Swift APIs (X10 will use the pre-built plugin)
+cmake -B build -G Ninja -S .
+cmake --build build
+```
+
+### Disabling Pre-built Plugin Loading
+
+If you want to force X10 to use compiled-in backends instead of pre-built
+plugins, set:
+
+```bash
+export XLA_USE_PREBUILT_PJRT=false
+```
+
+This is useful when you've built X10 with specific backend support and want to
+ensure those backends are used.
+
+---
+
+## Building With Swift Package Manager (Recommended)
+
+Swift Package Manager (SPM) is the recommended way to build the Swift APIs
+when using pre-built PJRT plugins. This provides the easiest development
+experience for most users.
+
+### Quick Start
+
+```bash
+# 1. Install JAX (provides PJRT plugins)
+pip install jax[cpu]
+
+# 2. Run the setup script
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+
+# 3. Source the environment
+source ~/.local/setup_env.sh
+
+# 4. Build with SPM
+swift build
+```
+
+### Setup Script Options
+
+The `setup_spm.py` script automates the SPM setup process:
+
+```bash
+# Setup with pre-built plugins (default)
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+
+# Setup for CUDA GPU
+python scripts/setup_spm.py --use-prebuilt --platform cuda --install-deps
+
+# Build X10 from source instead
+python scripts/setup_spm.py --build-x10 --platform cpu
+
+# Custom installation prefix
+python scripts/setup_spm.py --use-prebuilt --prefix /opt/x10
+
+# Generate pkg-config file only
+python scripts/setup_spm.py --generate-pc --prefix ~/.local
+```
+
+### Manual Setup
+
+If you prefer manual setup:
+
+```bash
+# Set environment variables
+export X10_LIBRARY_PATH=~/.local/lib
+export X10_INCLUDE_PATH=~/.local/include
+export XLA_PLATFORM=cpu
+export PKG_CONFIG_PATH=~/.local/lib/pkgconfig:$PKG_CONFIG_PATH
+export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+
+# Build with SPM
+swift build
+
+# Or with explicit paths
+swift build -Xcc -I~/.local/include -Xlinker -L~/.local/lib
+```
+
+### SPM Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `X10_LIBRARY_PATH` | Path to X10 library | `~/.local/lib` |
+| `X10_INCLUDE_PATH` | Path to X10 headers | `~/.local/include` |
+| `X10_USE_PREBUILT_PJRT` | Use pre-built plugins | `true` (default) |
+| `XLA_PLATFORM` | Target platform | `cpu`, `cuda`, `tpu` |
+
+### Building Specific Targets
+
+```bash
+# Build the X10 library
+swift build --target X10
+
+# Build TensorFlow library
+swift build --target TensorFlow
+
+# Build optimizers
+swift build --target x10_optimizers_optimizer
+
+# Run tests
+swift test --target X10Tests
+```
+
+### Using X10 in Your Package
+
+Add Swift for TensorFlow as a dependency in your `Package.swift`:
+
+```swift
+// swift-tools-version:5.5
+import PackageDescription
+
+let package = Package(
+    name: "MyProject",
+    dependencies: [
+        .package(url: "https://github.com/tensorflow/swift-apis", branch: "main"),
+    ],
+    targets: [
+        .target(
+            name: "MyProject",
+            dependencies: [
+                .product(name: "X10", package: "swift-apis"),
+            ]),
+    ]
+)
+```
+
+Then in your Swift code:
+
+```swift
+import X10
+
+// Use X10 tensors
+let device = Device(kind: .CPU, ordinal: 0, backend: .XLA)
+let tensor = Tensor<Float>(randomNormal: [1024, 1024], on: device)
+let result = matmul(tensor, tensor)
+LazyTensorBarrier()
+```
+
+### Troubleshooting SPM Builds
+
+**Library not found:**
+```bash
+# Ensure environment is set
+source ~/.local/setup_env.sh
+
+# Or set paths explicitly
+swift build -Xlinker -L~/.local/lib -Xlinker -lx10
+```
+
+**Header not found:**
+```bash
+swift build -Xcc -I~/.local/include
+```
+
+**pkg-config not finding x10:**
+```bash
+# Regenerate pkg-config file
+python scripts/setup_spm.py --generate-pc --prefix ~/.local
+
+# Verify it works
+pkg-config --libs x10
+```
+
+**Symbol not found at runtime:**
+```bash
+# Add library path to runtime search path
+export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+# On macOS
+export DYLD_LIBRARY_PATH=~/.local/lib:$DYLD_LIBRARY_PATH
+```
+
+---
+
+## Building With CMake (Legacy)
 
 With CMake, X10 and Swift APIs can be built either together or separately.
 
@@ -92,7 +503,7 @@ Note the location where you extract the prebuilt library. The path to these
 libraries is not fixed and depends on your machine setup.
 You should substitute the paths with the appropriate values. In the example
 commands below, we assume that the library is packaged in a traditional Unix
-style layout and placed in `/Library/tensorflow-2.4.0`.
+style layout and placed in `/Library/tensorflow-2.20.0`.
 
 Because the library name differs based on the platform, the following examples
 may help identify what the flags should look like for the target that you are
@@ -102,8 +513,8 @@ macOS:
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/libx10.dylib \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/libx10.dylib \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -111,8 +522,8 @@ Windows:
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/x10.lib \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/x10.lib \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -120,8 +531,8 @@ Other Unix systems (e.g. Linux, BSD, Android, etc):
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/libx10.so \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/libx10.so \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -186,7 +597,7 @@ The library is designed to be built as part of the
 [tensorflow](https://github.com/tensorflow/tensorflow) build. As such, in
 order to build X10, you must build tensorflow.
 
-Currently X10 is developed against TensorFlow 2.4.0. The following build
+Currently X10 is developed against TensorFlow 2.20.0. The following build
 scripts provide commands to build on common platforms. They largely replicate
 the build instructions for TensorFlow. The instructions diverge in that we
 must copy the additional X10 library sources into the tensorflow repository.
@@ -226,7 +637,7 @@ sources instead of creating a junction.*
 git clone git://github.com/tensorflow/swift-apis
 :: checkout tensorflow
 git clone --depth 1 --no-tags git://github.com/tensorflow/tensorflow
-git -C tensorflow checkout refs/heads/r2.4
+git -C tensorflow checkout refs/heads/r2.20
 
 :: Link X10 into the source tree
 mklink /J %CD%\tensorflow\swift_bindings %CD%\swift-apis\Sources\CX10
@@ -253,7 +664,7 @@ bazel --output_user_root %CD%/caches/bazel/tensorflow build -c opt --copt /D_USE
 bazel --output_user_root %CD%/caches/bazel/tensorflow shutdown
 
 :: package
-set DESTDIR=%CD%\Library\tensorflow-windows-%VSCMD_ARG_TGT_ARCH%\tensorflow-2.4.0
+set DESTDIR=%CD%\Library\tensorflow-windows-%VSCMD_ARG_TGT_ARCH%\tensorflow-2.20.0
 
 md %DESTDIR\usr\bin
 copy tensorflow\bazel-bin\tensorflow\tensorflow.dll %DESTDIR%\usr\bin\
@@ -297,7 +708,7 @@ copy tensorflow\bazel-out\%VSCMD_ARG_TGT_ARCH%_windows-opt\bin\tensorflow\tensor
 git clone git://github.com/tensorflow/swift-apis
 # checkout tensorflow
 git clone --depth 1 --no-tags git://github.com/tensorflow/tensorflow
-git -C tensorflow checkout refs/heads/r2.4
+git -C tensorflow checkout refs/heads/r2.20
 
 # Link X10 into the source tree
 ln -sf ${PWD}/swift-apis/Sources/CX10 ${PWD}/tensorflow/swift_bindings
@@ -324,10 +735,10 @@ bazel --output_user_root ${PWD}/caches/bazel/tensorflow build -c opt --define fr
 bazel --output_user_root ${PWD}/caches/bazel/tensorflow shutdown
 
 # package
-DESTDIR=${PWD}/Library/tensorflow-$(echo $(uname -s) | tr 'A-Z' 'a-z')-$(uname -m)/tensorflow-2.4.0
+DESTDIR=${PWD}/Library/tensorflow-$(echo $(uname -s) | tr 'A-Z' 'a-z')-$(uname -m)/tensorflow-2.20.0
 
 mkdir -p ${DESTDIR}/usr/lib
-cp tensorflow/bazel-bin/tensorflow/libtensorflow-2.4.0.(dylib|so) ${DESTDIR}/usr/lib/
+cp tensorflow/bazel-bin/tensorflow/libtensorflow-2.20.0.(dylib|so) ${DESTDIR}/usr/lib/
 cp tensorflow/bazel-bin/tensorflow/compiler/tf2xla/xla_tensor/libx10.(dylib|so) ${DESTDIR}/usr/lib/
 
 mkdir -p ${DESTDIR}/usr/include/tensorflow/c
@@ -378,10 +789,10 @@ SwiftPM requires two items:
 The path to these libraries is not fixed and depends on your machine setup.
 You should substitute the paths with the appropriate values. In the example
 commands below, we assume that the library is packaged in a traditional Unix
-style layout and placed in `/Library/tensorflow-2.4.0`.
+style layout and placed in `/Library/tensorflow-2.20.0`.
 
 ```shell
-$ swift build -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+$ swift build -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 #### macOS
@@ -398,7 +809,7 @@ xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolc
 ```
 This allows one to build the package as:
 ```shell
-TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolchains -type d -depth 1 -regex '.*/swift-DEVELOPMENT-SNAPSHOT-.*.xctoolchain' | sort -u | tail -n 1)/Info.plist "/plist/dict/key[. = 'CFBundleIdentifier']/following-sibling::string[1]//text()") swift build -Xswiftc -DTENSORFLOW_USE_STANDARD_TOOLCHAIN -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolchains -type d -depth 1 -regex '.*/swift-DEVELOPMENT-SNAPSHOT-.*.xctoolchain' | sort -u | tail -n 1)/Info.plist "/plist/dict/key[. = 'CFBundleIdentifier']/following-sibling::string[1]//text()") swift build -Xswiftc -DTENSORFLOW_USE_STANDARD_TOOLCHAIN -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 ### Running tests
@@ -406,7 +817,7 @@ TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/De
 To run tests:
 
 ```shell
-$ swift test -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+$ swift test -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 [swift]: https://swift.org/download/#snapshots

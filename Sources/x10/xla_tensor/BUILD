@@ -1,11 +1,9 @@
 licenses(["notice"])  # Apache 2.0
 
-load(
-    "//tensorflow:tensorflow.bzl",
-    "tf_cc_binary",
-    "tf_cc_shared_object",
-)
+package(default_visibility = ["//visibility:public"])
 
+# OpenXLA-based tensor library
+# Migrated from TensorFlow XLA to standalone OpenXLA
 cc_library(
     name = "tensor",
     srcs = glob(
@@ -19,49 +17,50 @@ cc_library(
         "*.h",
         "ops/*.h",
     ]),
-    visibility = ["//visibility:public"],
     deps = [
-        "//tensorflow/c:c_api",
-        "//tensorflow/c:c_api_experimental",
-        "//tensorflow/c/eager:c_api",
-        "//tensorflow/c/eager:c_api_experimental",
-        "//tensorflow/compiler/tf2xla:common",
-        "//tensorflow/compiler/tf2xla/kernels:conv_op_helpers",
-        "//tensorflow/compiler/tf2xla/lib:random",
-        "//tensorflow/compiler/tf2xla/lib:scatter",
-        "//tensorflow/compiler/xla:literal",
-        "//tensorflow/compiler/xla:literal_util",
-        "//tensorflow/compiler/xla:shape_util",
-        "//tensorflow/compiler/xla:status",
-        "//tensorflow/compiler/xla:types",
-        "//tensorflow/compiler/xla:util",
-        "//tensorflow/compiler/xla:xla_data_proto_cc",
-        "//tensorflow/compiler/xla/client:padding",
-        "//tensorflow/compiler/xla/client:xla_builder",
-        "//tensorflow/compiler/xla/client/lib:arithmetic",
-        "//tensorflow/compiler/xla/client/lib:comparators",
-        "//tensorflow/compiler/xla/client/lib:constants",
-        "//tensorflow/compiler/xla/client/lib:logdet",
-        "//tensorflow/compiler/xla/client/lib:math",
-        "//tensorflow/compiler/xla/client/lib:matrix",
-        "//tensorflow/compiler/xla/client/lib:pooling",
-        "//tensorflow/compiler/xla/client/lib:prng",
-        "//tensorflow/compiler/xla/client/lib:qr",
-        "//tensorflow/compiler/xla/client/lib:self_adjoint_eig",
-        "//tensorflow/compiler/xla/client/lib:slicing",
-        "//tensorflow/compiler/xla/client/lib:svd",
-        "//tensorflow/compiler/xla/service:hlo",
-        "//tensorflow/compiler/xla/xla_client:xrt_computation_client",
-        "//tensorflow/core:core_cpu_lib",
-        "//tensorflow/core:framework",
-        "//tensorflow/core:lib",
-        "//tensorflow/core/kernels:conv_ops",
+        # XLA client (use PJRT-based client for OpenXLA)
+        "//xla_client:computation_client",
+        "//xla_client:pjrt_computation_client",
+        "//xla_client:xla_client_util",
+        # Core XLA libraries (OpenXLA paths)
+        "@xla//xla:literal",
+        "@xla//xla:literal_util",
+        "@xla//xla:shape_util",
+        "@xla//xla:status",
+        "@xla//xla:statusor",
+        "@xla//xla:types",
+        "@xla//xla:util",
+        "@xla//xla:xla_data_proto_cc",
+        # XLA client libraries
+        "@xla//xla/client:padding",
+        "@xla//xla/client:xla_builder",
+        "@xla//xla/client:xla_computation",
+        "@xla//xla/client/lib:arithmetic",
+        "@xla//xla/client/lib:comparators",
+        "@xla//xla/client/lib:constants",
+        "@xla//xla/client/lib:logdet",
+        "@xla//xla/client/lib:math",
+        "@xla//xla/client/lib:matrix",
+        "@xla//xla/client/lib:pooling",
+        "@xla//xla/client/lib:prng",
+        "@xla//xla/client/lib:qr",
+        "@xla//xla/client/lib:self_adjoint_eig",
+        "@xla//xla/client/lib:slicing",
+        "@xla//xla/client/lib:svd",
+        # XLA service libraries
+        "@xla//xla/service:hlo",
+        "@xla//xla/service:hlo_proto_cc",
+        # MLIR/HLO utilities (for StableHLO support)
+        # "@xla//xla/mlir_hlo",
+        # Abseil libraries
         "@com_google_absl//absl/base",
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/container:node_hash_map",
         "@com_google_absl//absl/container:node_hash_set",
         "@com_google_absl//absl/debugging:stacktrace",
         "@com_google_absl//absl/debugging:symbolize",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/memory",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/strings:str_format",
@@ -71,11 +70,11 @@ cc_library(
     ],
 )
 
+# Windows DLL import library
 filegroup(
     name = "get_x10_dll_import_lib",
     srcs = [":x10.dll"],
     output_group = "interface_library",
-    visibility = ["//visibility:public"],
 )
 
 genrule(
@@ -83,28 +82,41 @@ genrule(
     srcs = [":get_x10_dll_import_lib"],
     outs = ["x10.lib"],
     cmd = select({
-        "//tensorflow:windows": "cp -f $< $@",
-        "//conditions:default": "touch $@",  # Just a placeholder for Unix platforms
+        "@platforms//os:windows": "cp -f $< $@",
+        "//conditions:default": "touch $@",  # Placeholder for Unix
     }),
-    visibility = ["//visibility:public"],
 )
 
-tf_cc_shared_object(
+# Shared library target
+cc_shared_library(
     name = "x10",
+    shared_lib_name = select({
+        "@platforms//os:macos": "libx10.dylib",
+        "@platforms//os:windows": "x10.dll",
+        "//conditions:default": "libx10.so",
+    }),
+    deps = [
+        "//swift_bindings:device_wrapper",
+        "//swift_bindings:xla_tensor_wrapper",
+        "//swift_bindings:xla_tensor_tf_ops",
+        ":tensor",
+    ],
+)
+
+# Alternative: cc_binary with linkshared for older Bazel versions
+cc_binary(
+    name = "libx10_shared",
+    linkshared = True,
+    linkstatic = False,
     linkopts = select({
-        "//tensorflow:macos": [
-            # TODO
-        ],
-        "//tensorflow:windows": [
-        ],
+        "@platforms//os:macos": [],
+        "@platforms//os:windows": [],
         "//conditions:default": [
             "-z defs",
             "-s",
             "-Wl,--version-script,$(location :tf_version_script.lds)",
         ],
     }),
-    per_os_targets = True,
-    visibility = ["//visibility:public"],
     deps = [
         "//swift_bindings:device_wrapper",
         "//swift_bindings:xla_tensor_wrapper",
@@ -114,3 +126,9 @@ tf_cc_shared_object(
         ":tf_version_script.lds",
     ],
 )
+
+# Export linker scripts
+exports_files([
+    "tf_exported_symbols.lds",
+    "tf_version_script.lds",
+])

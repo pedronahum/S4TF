@@ -1,0 +1,123 @@
+# OpenXLA WORKSPACE Configuration for X10
+# This file configures Bazel to build X10 with standalone OpenXLA
+# instead of the TensorFlow-bundled XLA.
+
+workspace(name = "x10")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+# ============================================================================
+# OpenXLA (standalone XLA)
+# ============================================================================
+
+# Pin to a specific commit for reproducibility
+# Update this to track OpenXLA releases
+OPENXLA_COMMIT = "main"  # Use a specific commit hash in production
+
+git_repository(
+    name = "xla",
+    remote = "https://github.com/openxla/xla.git",
+    branch = OPENXLA_COMMIT,
+    # For a specific commit:
+    # commit = "abc123...",
+)
+
+# Load XLA workspace dependencies
+load("@xla//xla:workspace.bzl", "xla_workspace")
+xla_workspace()
+
+# Load XLA's third-party dependencies
+load("@xla//third_party:repo.bzl", "tf_http_archive")
+
+# ============================================================================
+# StableHLO (optional, for portable HLO representation)
+# ============================================================================
+
+git_repository(
+    name = "stablehlo",
+    remote = "https://github.com/openxla/stablehlo.git",
+    branch = "main",
+)
+
+# ============================================================================
+# Abseil (Google's C++ common libraries)
+# ============================================================================
+
+http_archive(
+    name = "com_google_absl",
+    sha256 = "PLACEHOLDER_SHA256",  # Update with actual SHA
+    strip_prefix = "abseil-cpp-20230802.1",
+    urls = [
+        "https://github.com/abseil/abseil-cpp/archive/refs/tags/20230802.1.tar.gz",
+    ],
+)
+
+# ============================================================================
+# Protocol Buffers
+# ============================================================================
+
+http_archive(
+    name = "com_google_protobuf",
+    sha256 = "PLACEHOLDER_SHA256",  # Update with actual SHA
+    strip_prefix = "protobuf-25.1",
+    urls = [
+        "https://github.com/protocolbuffers/protobuf/archive/v25.1.tar.gz",
+    ],
+)
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+protobuf_deps()
+
+# ============================================================================
+# gRPC (for distributed execution)
+# ============================================================================
+
+http_archive(
+    name = "com_github_grpc_grpc",
+    sha256 = "PLACEHOLDER_SHA256",  # Update with actual SHA
+    strip_prefix = "grpc-1.59.2",
+    urls = [
+        "https://github.com/grpc/grpc/archive/v1.59.2.tar.gz",
+    ],
+)
+
+load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps")
+grpc_deps()
+
+# ============================================================================
+# LLVM/MLIR (required by XLA)
+# ============================================================================
+
+# XLA's workspace.bzl should handle LLVM/MLIR dependencies
+# If not, they can be added here
+
+# ============================================================================
+# Platform toolchains
+# ============================================================================
+
+# Python configuration (for XLA Python bindings, if needed)
+load("@xla//third_party/py:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python")
+
+# CUDA configuration (for GPU support)
+load("@xla//third_party/gpus:cuda_configure.bzl", "cuda_configure")
+cuda_configure(name = "local_config_cuda")
+
+# ROCm configuration (for AMD GPU support)
+load("@xla//third_party/gpus:rocm_configure.bzl", "rocm_configure")
+rocm_configure(name = "local_config_rocm")
+
+# ============================================================================
+# Build settings
+# ============================================================================
+
+# Register execution platforms
+register_execution_platforms(
+    "@local_config_platform//:host",
+)
+
+# Register toolchains
+register_toolchains(
+    "@local_config_cuda//cuda:toolchain",
+)

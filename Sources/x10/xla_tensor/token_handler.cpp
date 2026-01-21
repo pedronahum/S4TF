@@ -1,9 +1,9 @@
-#include "tensorflow/compiler/tf2xla/xla_tensor/token_handler.h"
+#include "xla_tensor/token_handler.h"
 
-#include "tensorflow/compiler/xla/client/lib/constants.h"
-#include "tensorflow/compiler/xla/shape_util.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/convert_ops.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
+#include "xla/client/lib/constants.h"
+#include "xla/shape_util.h"
+#include "xla_tensor/convert_ops.h"
+#include "xla_tensor/helpers.h"
 
 namespace swift_xla {
 namespace {

@@ -22,8 +22,8 @@
 #include <vector>
 
 #include "absl/types/span.h"
-#include "tensorflow/compiler/xla/xla_client/mesh_service.pb.h"
-#include "tensorflow/compiler/xla/types.h"
+#include "xla/xla_client/mesh_service.pb.h"
+#include "xla/types.h"
 
 namespace xla {
 namespace service {

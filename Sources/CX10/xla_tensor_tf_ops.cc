@@ -20,9 +20,9 @@
 
 #include "xla_tensor_tf_ops.h"
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/tensor.h"
-#include "tensorflow/compiler/xla/client/lib/pooling.h"
+#include "xla_tensor/helpers.h"
+#include "xla_tensor/tensor.h"
+#include "xla/client/lib/pooling.h"
 
 using swift_xla::XlaHelpers;
 using swift_xla::XLATensor;

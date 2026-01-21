@@ -19,8 +19,8 @@
 #include <string>
 
 #include "absl/types/span.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/ir.h"
-#include "tensorflow/compiler/xla/xla_client/device.h"
+#include "xla_tensor/ir.h"
+#include "xla/xla_client/device.h"
 
 namespace swift_xla {
 namespace ir {

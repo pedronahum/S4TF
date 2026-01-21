@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/xla/xla_client/xrt_local_service.h"
+#include "xla/xla_client/xrt_local_service.h"
 
 #include <vector>
 
 #include "absl/strings/str_join.h"
 #include "absl/strings/str_split.h"
-#include "tensorflow/core/lib/core/errors.h"
+#include "absl/status/status.h"
 #include "tensorflow/core/lib/core/status.h"
 #include "tensorflow/core/protobuf/cluster.pb.h"
 #include "tensorflow/core/protobuf/tensorflow_server.pb.h"

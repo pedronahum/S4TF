@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/xla/xla_client/xla_util.h"
+#include "xla/xla_client/xla_util.h"
 
 #include <fstream>
 #include <mutex>
@@ -20,13 +20,13 @@
 #include <stdexcept>
 #include <thread>
 
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/sys_util.h"
-#include "tensorflow/compiler/xla/xla_client/tf_logging.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/xla/shape_util.h"
-#include "tensorflow/compiler/xla/util.h"
-#include "tensorflow/core/lib/core/errors.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/sys_util.h"
+#include "xla/xla_client/tf_logging.h"
+#include "xla/xla_client/util.h"
+#include "xla/shape_util.h"
+#include "xla/util.h"
+#include "absl/status/status.h"
 
 namespace xla {
 namespace util {

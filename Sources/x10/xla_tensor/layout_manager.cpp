@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/layout_manager.h"
+#include "xla_tensor/layout_manager.h"
 
 #include <algorithm>
 #include <exception>
@@ -24,11 +24,11 @@
 
 #include "absl/container/node_hash_map.h"
 #include "absl/strings/str_split.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/xla/xla_client/sys_util.h"
-#include "tensorflow/compiler/xla/xla_client/tf_logging.h"
-#include "tensorflow/compiler/xla/xla_client/util.h"
-#include "tensorflow/compiler/xla/shape_util.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla/xla_client/sys_util.h"
+#include "xla/xla_client/tf_logging.h"
+#include "xla/xla_client/util.h"
+#include "xla/shape_util.h"
 
 namespace swift_xla {
 namespace {

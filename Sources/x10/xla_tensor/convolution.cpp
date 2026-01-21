@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/convolution.h"
+#include "xla_tensor/convolution.h"
 
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/helpers.h"
-#include "tensorflow/compiler/tf2xla/xla_tensor/tensor.h"
-#include "tensorflow/compiler/tf2xla/kernels/conv_op_helpers.h"
-#include "tensorflow/compiler/xla/client/lib/constants.h"
-#include "tensorflow/core/framework/tensor_shape.h"
-#include "tensorflow/core/kernels/conv_grad_ops.h"
+#include "xla/xla_client/debug_macros.h"
+#include "xla_tensor/helpers.h"
+#include "xla_tensor/tensor.h"
+#include "xla/tf2xla/kernels/conv_op_helpers.h"
+#include "xla/client/lib/constants.h"
+#include "xla/shape.h"
+// Conv grad ops implemented locally
 
 namespace swift_xla {
 namespace {

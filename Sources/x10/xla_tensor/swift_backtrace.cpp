@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorflow/compiler/tf2xla/xla_tensor/swift_backtrace.h"
+#include "xla_tensor/swift_backtrace.h"
 
 #ifdef __linux__
 #include <unistd.h>
@@ -22,7 +22,7 @@
 #include "absl/base/call_once.h"
 #include "absl/debugging/stacktrace.h"
 #include "absl/debugging/symbolize.h"
-#include "tensorflow/compiler/xla/xla_client/debug_macros.h"
+#include "xla/xla_client/debug_macros.h"
 #endif
 
 namespace swift_xla {
