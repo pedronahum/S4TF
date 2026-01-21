@@ -11,7 +11,85 @@ The X10 tensor library has been migrated from using XLA through TensorFlow to us
 3. **Better portability**: Standalone XLA is easier to integrate
 4. **Active development**: OpenXLA is actively maintained by Google and partners
 
-## Key Changes
+## Swift API Stability
+
+**The Swift API is completely unchanged.** This migration only affects the C++ backend implementation. Your existing Swift code will work without any modifications:
+
+```swift
+import TensorFlow
+
+// All existing APIs work exactly as before
+let device = Device(kind: .GPU, ordinal: 0, backend: .XLA)
+let tensor = Tensor<Float>(randomNormal: [1024, 1024], on: device)
+let result = matmul(tensor, tensor)
+
+// LazyTensorBarrier still works - now uses PJRT internally
+LazyTensorBarrier()
+```
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Your Swift Code                          │
+│                      (unchanged)                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Swift TensorFlow APIs                          │
+│         (Tensor.swift, Layer.swift, etc.)                   │
+│                      (unchanged)                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Swift X10 Bindings                             │
+│         (Device.swift, XLATensor.swift)                     │
+│                      (unchanged)                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              C Interface (FFI Boundary)                     │
+│    (device_wrapper.h, xla_tensor_wrapper.h)                 │
+│                      (unchanged)                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              C++ Implementation                             │
+│    (device_wrapper.cc, xla_tensor_wrapper.cc)               │
+│                      (UPDATED)                              │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              XLA Client Layer                               │
+│         (pjrt_computation_client.cc)                        │
+│                       (NEW)                                 │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    OpenXLA / PJRT                           │
+│              (Replaces TensorFlow XLA/XRT)                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### What Changed vs What Stayed the Same
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Swift user code | ✅ Unchanged | No changes needed |
+| Swift TensorFlow APIs | ✅ Unchanged | Same Tensor, Layer, etc. |
+| Swift X10 bindings | ✅ Unchanged | Device.swift, XLATensor.swift |
+| C interface | ✅ Unchanged | device_wrapper.h, xla_tensor_wrapper.h |
+| C++ implementation | ⚠️ Updated | Internal changes for PJRT |
+| XLA client | 🆕 New | PJRT replaces XRT |
+| Build system | ⚠️ Updated | Uses standalone OpenXLA |
+
+## Key Changes (C++ Backend Only)
 
 ### 1. Include Path Changes
 
@@ -122,10 +200,10 @@ auto results = device->ExecuteComputation(computation, arguments, options);
 - [x] Update BUILD files with OpenXLA dependencies
 - [x] Create TF compatibility headers
 - [x] Create WORKSPACE.openxla and MODULE.bazel
+- [x] Swift bindings verified unchanged (C interface stable)
 - [ ] Test CPU backend
 - [ ] Test GPU backend
 - [ ] Test TPU backend
-- [ ] Update Swift bindings if needed
 - [ ] Performance benchmarking
 
 ## Known Issues

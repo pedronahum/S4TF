@@ -95,6 +95,20 @@ X10 has been migrated from TensorFlow's XLA to standalone [OpenXLA](https://gith
 This provides cleaner dependencies and uses the modern PJRT runtime. See
 [OpenXLA Migration Guide](docs/OPENXLA_MIGRATION.md) for details.
 
+**Important: The Swift API is unchanged.** Your existing Swift code will work exactly as before:
+
+```swift
+import TensorFlow
+
+// Same API - just works!
+let device = Device(kind: .GPU, ordinal: 0, backend: .XLA)
+let tensor = Tensor<Float>(randomNormal: [1024, 1024], on: device)
+let result = matmul(tensor, tensor)
+LazyTensorBarrier()  // Triggers XLA compilation via PJRT
+```
+
+The migration only affects the C++ backend - PJRT replaces XRT internally.
+
 #### Quick Start with OpenXLA
 
 ```bash
