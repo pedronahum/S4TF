@@ -8,6 +8,17 @@ Swift for TensorFlow APIs can be built with either:
 
 * CMake 3.16 or later from [cmake.org][cmake]
 * Swift Package Manager (included in the above toolchain)
+* Bazel 6.0 or later (for OpenXLA builds)
+
+## Build Options
+
+There are two ways to build X10:
+
+1. **OpenXLA Build (Recommended)**: Uses standalone OpenXLA with PJRT runtime
+2. **Legacy TensorFlow Build**: Uses TensorFlow's bundled XLA with XRT runtime
+
+For new development, the OpenXLA build is recommended as it provides cleaner
+dependencies and uses the modern PJRT runtime.
 
 ## Components
 
@@ -37,10 +48,143 @@ Building Swift for TensorFlow APIs involves two distinct components:
 
 The two components can be built together (CMake only) or separately.
 
-Follow the instructions below based on your preferred build tool (CMake or
-SwiftPM).
+Follow the instructions below based on your preferred build tool.
 
-## Building With CMake
+---
+
+## Building With OpenXLA (Recommended)
+
+The recommended way to build X10 is with standalone OpenXLA using Bazel. This
+approach uses the modern PJRT runtime and doesn't require a full TensorFlow build.
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Bazel | 6.0+ | Install via [Bazelisk][bazelisk] (recommended) |
+| C++ Compiler | C++17 support | GCC 9+, Clang 10+, or MSVC 2019+ |
+| Python | 3.8+ | With pip |
+| Git | 2.x | For fetching dependencies |
+
+**Optional for GPU/TPU:**
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| CUDA | 11.8+ | For NVIDIA GPU support |
+| cuDNN | 8.6+ | For NVIDIA GPU support |
+| ROCm | 5.0+ | For AMD GPU support |
+| Cloud TPU | - | For TPU support |
+
+### Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/tensorflow/swift-apis
+cd swift-apis
+
+# Build X10 with CPU support
+bazel build //xla_tensor:x10
+
+# Run tests
+bazel test //xla_tensor:all
+```
+
+### Build Configurations
+
+#### CPU-Only Build
+
+```bash
+bazel build //xla_tensor:x10
+```
+
+#### GPU Build (CUDA)
+
+```bash
+# Set environment variables
+export TF_NEED_CUDA=1
+export CUDA_TOOLKIT_PATH=/usr/local/cuda
+export CUDNN_INSTALL_PATH=/usr/local/cuda
+
+# Build with CUDA support
+bazel build --config=cuda //xla_tensor:x10
+```
+
+#### GPU Build (ROCm)
+
+```bash
+# Set environment variables
+export TF_NEED_ROCM=1
+export ROCM_PATH=/opt/rocm
+
+# Build with ROCm support
+bazel build --config=rocm //xla_tensor:x10
+```
+
+#### TPU Build
+
+```bash
+# Build with TPU support
+bazel build --config=tpu //xla_tensor:x10
+```
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `XLA_PLATFORM` | Platform to use: "cpu", "gpu", "tpu" | "cpu" |
+| `XLA_DEFAULT_DEVICE` | Default device (e.g., "GPU:0") | Auto-detected |
+| `XLA_CPU_DEVICE_COUNT` | Number of CPU devices | 1 |
+
+### Build Targets
+
+| Target | Description |
+|--------|-------------|
+| `//xla_tensor:x10` | Main X10 shared library |
+| `//xla_tensor:tensor` | X10 tensor library (static) |
+| `//xla_client:pjrt_computation_client` | PJRT-based computation client |
+| `//xla_client:xla_client_util` | XLA client utilities |
+
+### Using Different PJRT Backends
+
+The build system provides different computation client variants:
+
+```bash
+# CPU backend (default)
+bazel build //xla_client:pjrt_computation_client
+
+# GPU backend
+bazel build //xla_client:pjrt_computation_client_gpu
+
+# TPU backend
+bazel build //xla_client:pjrt_computation_client_tpu
+```
+
+### Troubleshooting OpenXLA Builds
+
+**Bazel version mismatch:**
+```bash
+# Use Bazelisk to automatically get the right version
+npm install -g @bazel/bazelisk
+# Or download from https://github.com/bazelbuild/bazelisk
+```
+
+**Missing CUDA libraries:**
+```bash
+# Ensure CUDA paths are set
+export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+```
+
+**Out of memory during build:**
+```bash
+# Limit Bazel's parallelism
+bazel build --jobs=4 //xla_tensor:x10
+```
+
+For more details, see the [OpenXLA Migration Guide](../docs/OPENXLA_MIGRATION.md).
+
+---
+
+## Building With CMake (Legacy)
 
 With CMake, X10 and Swift APIs can be built either together or separately.
 

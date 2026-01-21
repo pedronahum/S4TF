@@ -89,6 +89,28 @@ For more models, go to [**tensorflow/swift-models**][swift-models].
 
 Documentation covering development can be found in the [Developer Guide](Documentation/Development.md).
 
+### OpenXLA Migration
+
+X10 has been migrated from TensorFlow's XLA to standalone [OpenXLA](https://github.com/openxla/xla).
+This provides cleaner dependencies and uses the modern PJRT runtime. See
+[OpenXLA Migration Guide](docs/OPENXLA_MIGRATION.md) for details.
+
+#### Quick Start with OpenXLA
+
+```bash
+# Prerequisites: Bazel 6.0+, C++17 compiler
+
+# Clone and build
+git clone https://github.com/tensorflow/swift-apis
+cd swift-apis
+
+# Build X10 with OpenXLA (CPU)
+bazel build --config=openxla //xla_tensor:x10
+
+# Build with GPU support
+bazel build --config=openxla --config=cuda //xla_tensor:x10
+```
+
 ## Bugs
 
 Please report bugs and feature requests using GitHub issues in this repository.
