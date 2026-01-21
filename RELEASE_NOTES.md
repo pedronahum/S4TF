@@ -97,6 +97,9 @@ All XLA includes updated from TensorFlow paths to OpenXLA paths:
 | `Sources/x10/xla_client/tf_compat.h` | TensorFlow type compatibility |
 | `Sources/CX10/tf_compat.h` | CX10 TensorFlow compatibility |
 | `scripts/find_pjrt_plugin.py` | Helper to find PJRT plugins |
+| `scripts/setup_spm.py` | SPM setup and configuration script |
+| `scripts/x10.pc.in` | pkg-config template |
+| `Tests/X10Tests/X10Tests.swift` | X10 test suite |
 | `WORKSPACE.openxla` | OpenXLA Bazel workspace |
 | `MODULE.bazel` | bzlmod configuration |
 | `docs/OPENXLA_MIGRATION.md` | Migration guide |
@@ -105,6 +108,7 @@ All XLA includes updated from TensorFlow paths to OpenXLA paths:
 
 | File | Changes |
 |------|---------|
+| `Package.swift` | SPM support with OpenXLA/PJRT, new X10 target |
 | `Sources/x10/xla_client/BUILD` | OpenXLA dependencies, PJRT targets |
 | `Sources/x10/xla_tensor/BUILD` | OpenXLA dependencies |
 | `Sources/CX10/BUILD` | OpenXLA/PJRT dependencies |
@@ -116,7 +120,22 @@ All XLA includes updated from TensorFlow paths to OpenXLA paths:
 
 ### Build Instructions
 
-#### Option 1: Using Pre-built Plugins (Easiest)
+#### Option 1: Swift Package Manager (Recommended)
+
+```bash
+# Setup environment with pre-built plugins
+pip install jax[cpu]
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+source ~/.local/setup_env.sh
+
+# Build
+swift build
+
+# Run tests
+swift test
+```
+
+#### Option 2: Using Pre-built Plugins (Easiest)
 
 ```bash
 # Install JAX

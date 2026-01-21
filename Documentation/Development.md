@@ -294,6 +294,163 @@ ensure those backends are used.
 
 ---
 
+## Building With Swift Package Manager (Recommended)
+
+Swift Package Manager (SPM) is the recommended way to build the Swift APIs
+when using pre-built PJRT plugins. This provides the easiest development
+experience for most users.
+
+### Quick Start
+
+```bash
+# 1. Install JAX (provides PJRT plugins)
+pip install jax[cpu]
+
+# 2. Run the setup script
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+
+# 3. Source the environment
+source ~/.local/setup_env.sh
+
+# 4. Build with SPM
+swift build
+```
+
+### Setup Script Options
+
+The `setup_spm.py` script automates the SPM setup process:
+
+```bash
+# Setup with pre-built plugins (default)
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+
+# Setup for CUDA GPU
+python scripts/setup_spm.py --use-prebuilt --platform cuda --install-deps
+
+# Build X10 from source instead
+python scripts/setup_spm.py --build-x10 --platform cpu
+
+# Custom installation prefix
+python scripts/setup_spm.py --use-prebuilt --prefix /opt/x10
+
+# Generate pkg-config file only
+python scripts/setup_spm.py --generate-pc --prefix ~/.local
+```
+
+### Manual Setup
+
+If you prefer manual setup:
+
+```bash
+# Set environment variables
+export X10_LIBRARY_PATH=~/.local/lib
+export X10_INCLUDE_PATH=~/.local/include
+export XLA_PLATFORM=cpu
+export PKG_CONFIG_PATH=~/.local/lib/pkgconfig:$PKG_CONFIG_PATH
+export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+
+# Build with SPM
+swift build
+
+# Or with explicit paths
+swift build -Xcc -I~/.local/include -Xlinker -L~/.local/lib
+```
+
+### SPM Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `X10_LIBRARY_PATH` | Path to X10 library | `~/.local/lib` |
+| `X10_INCLUDE_PATH` | Path to X10 headers | `~/.local/include` |
+| `X10_USE_PREBUILT_PJRT` | Use pre-built plugins | `true` (default) |
+| `XLA_PLATFORM` | Target platform | `cpu`, `cuda`, `tpu` |
+
+### Building Specific Targets
+
+```bash
+# Build the X10 library
+swift build --target X10
+
+# Build TensorFlow library
+swift build --target TensorFlow
+
+# Build optimizers
+swift build --target x10_optimizers_optimizer
+
+# Run tests
+swift test --target X10Tests
+```
+
+### Using X10 in Your Package
+
+Add Swift for TensorFlow as a dependency in your `Package.swift`:
+
+```swift
+// swift-tools-version:5.5
+import PackageDescription
+
+let package = Package(
+    name: "MyProject",
+    dependencies: [
+        .package(url: "https://github.com/tensorflow/swift-apis", branch: "main"),
+    ],
+    targets: [
+        .target(
+            name: "MyProject",
+            dependencies: [
+                .product(name: "X10", package: "swift-apis"),
+            ]),
+    ]
+)
+```
+
+Then in your Swift code:
+
+```swift
+import X10
+
+// Use X10 tensors
+let device = Device(kind: .CPU, ordinal: 0, backend: .XLA)
+let tensor = Tensor<Float>(randomNormal: [1024, 1024], on: device)
+let result = matmul(tensor, tensor)
+LazyTensorBarrier()
+```
+
+### Troubleshooting SPM Builds
+
+**Library not found:**
+```bash
+# Ensure environment is set
+source ~/.local/setup_env.sh
+
+# Or set paths explicitly
+swift build -Xlinker -L~/.local/lib -Xlinker -lx10
+```
+
+**Header not found:**
+```bash
+swift build -Xcc -I~/.local/include
+```
+
+**pkg-config not finding x10:**
+```bash
+# Regenerate pkg-config file
+python scripts/setup_spm.py --generate-pc --prefix ~/.local
+
+# Verify it works
+pkg-config --libs x10
+```
+
+**Symbol not found at runtime:**
+```bash
+# Add library path to runtime search path
+export LD_LIBRARY_PATH=~/.local/lib:$LD_LIBRARY_PATH
+# On macOS
+export DYLD_LIBRARY_PATH=~/.local/lib:$DYLD_LIBRARY_PATH
+```
+
+---
+
 ## Building With CMake (Legacy)
 
 With CMake, X10 and Swift APIs can be built either together or separately.

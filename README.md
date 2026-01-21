@@ -143,6 +143,19 @@ python scripts/find_pjrt_plugin.py
 
 See [Using Pre-built PJRT Plugins](Documentation/Development.md#using-pre-built-pjrt-plugins-easiest) for details.
 
+#### Building with Swift Package Manager
+
+```bash
+# Setup SPM environment
+python scripts/setup_spm.py --use-prebuilt --platform cpu
+source ~/.local/setup_env.sh
+
+# Build
+swift build
+```
+
+See [Building With Swift Package Manager](Documentation/Development.md#building-with-swift-package-manager-recommended) for details.
+
 ## Bugs
 
 Please report bugs and feature requests using GitHub issues in this repository.
