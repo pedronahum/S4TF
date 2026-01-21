@@ -11,7 +11,7 @@
 #include "xla/xla_client/thread_pool.h"
 #include "xla/xla_client/util.h"
 #include "xla/service/platform_util.h"
-#include "tensorflow/core/profiler/lib/traceme.h"
+#include "xla/xla_client/tf_compat.h"
 
 namespace xla {
 namespace {

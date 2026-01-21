@@ -26,7 +26,7 @@
 #include "xla/xla_client/util.h"
 #include "xla/shape_util.h"
 #include "xla/util.h"
-#include "tensorflow/core/lib/core/errors.h"
+#include "absl/status/status.h"
 
 namespace xla {
 namespace util {

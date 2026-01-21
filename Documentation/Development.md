@@ -236,7 +236,7 @@ Note the location where you extract the prebuilt library. The path to these
 libraries is not fixed and depends on your machine setup.
 You should substitute the paths with the appropriate values. In the example
 commands below, we assume that the library is packaged in a traditional Unix
-style layout and placed in `/Library/tensorflow-2.4.0`.
+style layout and placed in `/Library/tensorflow-2.20.0`.
 
 Because the library name differs based on the platform, the following examples
 may help identify what the flags should look like for the target that you are
@@ -246,8 +246,8 @@ macOS:
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/libx10.dylib \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/libx10.dylib \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -255,8 +255,8 @@ Windows:
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/x10.lib \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/x10.lib \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -264,8 +264,8 @@ Other Unix systems (e.g. Linux, BSD, Android, etc):
 
 ```shell
 cmake -B out -G Ninja -S swift-apis -D CMAKE_BUILD_TYPE=Release \
-  -D X10_LIBRARY=/Library/tensorflow-2.4.0/usr/lib/libx10.so \
-  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.4.0/usr/include
+  -D X10_LIBRARY=/Library/tensorflow-2.20.0/usr/lib/libx10.so \
+  -D X10_INCLUDE_DIRS=/Library/tensorflow-2.20.0/usr/include
 cmake --build out
 ```
 
@@ -330,7 +330,7 @@ The library is designed to be built as part of the
 [tensorflow](https://github.com/tensorflow/tensorflow) build. As such, in
 order to build X10, you must build tensorflow.
 
-Currently X10 is developed against TensorFlow 2.4.0. The following build
+Currently X10 is developed against TensorFlow 2.20.0. The following build
 scripts provide commands to build on common platforms. They largely replicate
 the build instructions for TensorFlow. The instructions diverge in that we
 must copy the additional X10 library sources into the tensorflow repository.
@@ -370,7 +370,7 @@ sources instead of creating a junction.*
 git clone git://github.com/tensorflow/swift-apis
 :: checkout tensorflow
 git clone --depth 1 --no-tags git://github.com/tensorflow/tensorflow
-git -C tensorflow checkout refs/heads/r2.4
+git -C tensorflow checkout refs/heads/r2.20
 
 :: Link X10 into the source tree
 mklink /J %CD%\tensorflow\swift_bindings %CD%\swift-apis\Sources\CX10
@@ -397,7 +397,7 @@ bazel --output_user_root %CD%/caches/bazel/tensorflow build -c opt --copt /D_USE
 bazel --output_user_root %CD%/caches/bazel/tensorflow shutdown
 
 :: package
-set DESTDIR=%CD%\Library\tensorflow-windows-%VSCMD_ARG_TGT_ARCH%\tensorflow-2.4.0
+set DESTDIR=%CD%\Library\tensorflow-windows-%VSCMD_ARG_TGT_ARCH%\tensorflow-2.20.0
 
 md %DESTDIR\usr\bin
 copy tensorflow\bazel-bin\tensorflow\tensorflow.dll %DESTDIR%\usr\bin\
@@ -441,7 +441,7 @@ copy tensorflow\bazel-out\%VSCMD_ARG_TGT_ARCH%_windows-opt\bin\tensorflow\tensor
 git clone git://github.com/tensorflow/swift-apis
 # checkout tensorflow
 git clone --depth 1 --no-tags git://github.com/tensorflow/tensorflow
-git -C tensorflow checkout refs/heads/r2.4
+git -C tensorflow checkout refs/heads/r2.20
 
 # Link X10 into the source tree
 ln -sf ${PWD}/swift-apis/Sources/CX10 ${PWD}/tensorflow/swift_bindings
@@ -468,10 +468,10 @@ bazel --output_user_root ${PWD}/caches/bazel/tensorflow build -c opt --define fr
 bazel --output_user_root ${PWD}/caches/bazel/tensorflow shutdown
 
 # package
-DESTDIR=${PWD}/Library/tensorflow-$(echo $(uname -s) | tr 'A-Z' 'a-z')-$(uname -m)/tensorflow-2.4.0
+DESTDIR=${PWD}/Library/tensorflow-$(echo $(uname -s) | tr 'A-Z' 'a-z')-$(uname -m)/tensorflow-2.20.0
 
 mkdir -p ${DESTDIR}/usr/lib
-cp tensorflow/bazel-bin/tensorflow/libtensorflow-2.4.0.(dylib|so) ${DESTDIR}/usr/lib/
+cp tensorflow/bazel-bin/tensorflow/libtensorflow-2.20.0.(dylib|so) ${DESTDIR}/usr/lib/
 cp tensorflow/bazel-bin/tensorflow/compiler/tf2xla/xla_tensor/libx10.(dylib|so) ${DESTDIR}/usr/lib/
 
 mkdir -p ${DESTDIR}/usr/include/tensorflow/c
@@ -522,10 +522,10 @@ SwiftPM requires two items:
 The path to these libraries is not fixed and depends on your machine setup.
 You should substitute the paths with the appropriate values. In the example
 commands below, we assume that the library is packaged in a traditional Unix
-style layout and placed in `/Library/tensorflow-2.4.0`.
+style layout and placed in `/Library/tensorflow-2.20.0`.
 
 ```shell
-$ swift build -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+$ swift build -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 #### macOS
@@ -542,7 +542,7 @@ xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolc
 ```
 This allows one to build the package as:
 ```shell
-TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolchains -type d -depth 1 -regex '.*/swift-DEVELOPMENT-SNAPSHOT-.*.xctoolchain' | sort -u | tail -n 1)/Info.plist "/plist/dict/key[. = 'CFBundleIdentifier']/following-sibling::string[1]//text()") swift build -Xswiftc -DTENSORFLOW_USE_STANDARD_TOOLCHAIN -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/Developer/Toolchains -type d -depth 1 -regex '.*/swift-DEVELOPMENT-SNAPSHOT-.*.xctoolchain' | sort -u | tail -n 1)/Info.plist "/plist/dict/key[. = 'CFBundleIdentifier']/following-sibling::string[1]//text()") swift build -Xswiftc -DTENSORFLOW_USE_STANDARD_TOOLCHAIN -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 ### Running tests
@@ -550,7 +550,7 @@ TOOLCHAINS=$(xpath 2>/dev/null $(find /Library/Developer/Toolchains ~/Library/De
 To run tests:
 
 ```shell
-$ swift test -Xcc -I/Library/tensorflow-2.4.0/usr/include -Xlinker -L/Library/tensorflow-2.4.0/usr/lib
+$ swift test -Xcc -I/Library/tensorflow-2.20.0/usr/include -Xlinker -L/Library/tensorflow-2.20.0/usr/lib
 ```
 
 [swift]: https://swift.org/download/#snapshots

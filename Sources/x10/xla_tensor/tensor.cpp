@@ -49,7 +49,7 @@
 #include "xla_tensor/tensor_util.h"
 #include "xla/literal_util.h"
 #include "xla/shape_util.h"
-#include "tensorflow/core/lib/core/errors.h"
+#include "absl/status/status.h"
 
 namespace swift_xla {
 namespace ir {

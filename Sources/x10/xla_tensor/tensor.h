@@ -36,9 +36,9 @@
 #include "xla/xla_client/device.h"
 #include "xla/xla_client/multi_wait.h"
 #include "xla/xla_client/util.h"
-#include "tensorflow/core/util/mirror_pad_mode.h"
-#include "tensorflow/core/util/padding.h"
-#include "tensorflow/core/util/tensor_format.h"
+#include "xla/xla_client/tf_compat.h"
+#include "xla/xla_client/tf_compat.h"
+#include "xla/xla_client/tf_compat.h"
 
 namespace swift_xla {
 

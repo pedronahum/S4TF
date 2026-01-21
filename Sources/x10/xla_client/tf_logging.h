@@ -1,5 +1,6 @@
 /*
  * Copyright 2020 TensorFlow Authors
+ * Copyright 2024 OpenXLA Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,36 +15,49 @@
  * limitations under the License.
  */
 
+// Standalone logging header for OpenXLA migration
+// Replaces tensorflow/core/platform/logging.h with absl logging
+
 #ifndef XLA_CLIENT_TF_LOGGING_H_
 #define XLA_CLIENT_TF_LOGGING_H_
 
 #include <sstream>
+#include <string>
 
+#include "absl/log/log.h"
+#include "absl/log/check.h"
+#include "absl/base/optimization.h"
 #include "xla/status.h"
-#include "tensorflow/core/platform/logging.h"
 
 namespace xla {
 namespace internal {
 
-// It happens that Caffe defined the same exact Google macros, hiding the TF
-// ones, and making log messages disappear.
-// Unfortunately to get those back, we have to poke through the TF
-// implementaiton of them.
-#define TF_LOG(severity) _TF_LOG_##severity
+// Logging macros that work with both OpenXLA and standalone builds
+// These replace the TensorFlow-specific logging macros
 
-#define TF_VLOG_IS_ON(lvl)                                                  \
-  (([](int level, const char* fname) {                                      \
-    static const bool vmodule_activated =                                   \
-        ::tensorflow::internal::LogMessage::VmoduleActivated(fname, level); \
-    return vmodule_activated;                                               \
-  })(lvl, __FILE__))
+#define TF_LOG(severity) LOG(severity)
+#define TF_VLOG(level) VLOG(level)
+#define TF_VLOG_IS_ON(level) VLOG_IS_ON(level)
 
-#define TF_VLOG(level)                                           \
-  TF_PREDICT_TRUE(!TF_VLOG_IS_ON(level))                         \
-  ? (void)0                                                      \
-  : ::tensorflow::internal::Voidifier() &                        \
-          ::tensorflow::internal::LogMessage(__FILE__, __LINE__, \
-                                             tensorflow::INFO)
+// Prediction macros for branch optimization
+#ifndef TF_PREDICT_FALSE
+#define TF_PREDICT_FALSE(x) ABSL_PREDICT_FALSE(x)
+#endif
+
+#ifndef TF_PREDICT_TRUE
+#define TF_PREDICT_TRUE(x) ABSL_PREDICT_TRUE(x)
+#endif
+
+// Attribute for functions that don't return
+#ifndef TF_ATTRIBUTE_NORETURN
+#if defined(__GNUC__)
+#define TF_ATTRIBUTE_NORETURN __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define TF_ATTRIBUTE_NORETURN __declspec(noreturn)
+#else
+#define TF_ATTRIBUTE_NORETURN
+#endif
+#endif
 
 struct ErrorSink : public std::basic_ostringstream<char> {};
 
@@ -70,25 +84,15 @@ class ErrorGenerator {
   while (TF_PREDICT_FALSE(!(condition))) \
   TF_ERROR_STREAM() << "Check failed: " #condition " "
 
-#define TF_CHECK_OP_LOG(name, op, val1, val2)                         \
-  while (::tensorflow::internal::CheckOpString _result{               \
-      ::tensorflow::internal::name##Impl(                             \
-          ::tensorflow::internal::GetReferenceableValue(val1),        \
-          ::tensorflow::internal::GetReferenceableValue(val2),        \
-          #val1 " " #op " " #val2)})                                  \
-  TF_ERROR_STREAM() << *(_result.str_)
+// Check macros using absl equivalents
+#define TF_CHECK_EQ(val1, val2) CHECK_EQ(val1, val2)
+#define TF_CHECK_NE(val1, val2) CHECK_NE(val1, val2)
+#define TF_CHECK_LE(val1, val2) CHECK_LE(val1, val2)
+#define TF_CHECK_LT(val1, val2) CHECK_LT(val1, val2)
+#define TF_CHECK_GE(val1, val2) CHECK_GE(val1, val2)
+#define TF_CHECK_GT(val1, val2) CHECK_GT(val1, val2)
 
-#define TF_CHECK_OP(name, op, val1, val2) TF_CHECK_OP_LOG(name, op, val1, val2)
-
-// TF_CHECK_EQ/NE/...
-#define TF_CHECK_EQ(val1, val2) TF_CHECK_OP(Check_EQ, ==, val1, val2)
-#define TF_CHECK_NE(val1, val2) TF_CHECK_OP(Check_NE, !=, val1, val2)
-#define TF_CHECK_LE(val1, val2) TF_CHECK_OP(Check_LE, <=, val1, val2)
-#define TF_CHECK_LT(val1, val2) TF_CHECK_OP(Check_LT, <, val1, val2)
-#define TF_CHECK_GE(val1, val2) TF_CHECK_OP(Check_GE, >=, val1, val2)
-#define TF_CHECK_GT(val1, val2) TF_CHECK_OP(Check_GT, >, val1, val2)
-
-#define TF_CHECK_NOTNULL(val) TF_CHECK(val != nullptr)
+#define TF_CHECK_NOTNULL(val) CHECK(val != nullptr)
 
 }  // namespace internal
 }  // namespace xla

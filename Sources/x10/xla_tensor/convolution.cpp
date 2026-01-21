@@ -19,8 +19,8 @@
 #include "xla_tensor/tensor.h"
 #include "xla/tf2xla/kernels/conv_op_helpers.h"
 #include "xla/client/lib/constants.h"
-#include "tensorflow/core/framework/tensor_shape.h"
-#include "tensorflow/core/kernels/conv_grad_ops.h"
+#include "xla/shape.h"
+// Conv grad ops implemented locally
 
 namespace swift_xla {
 namespace {

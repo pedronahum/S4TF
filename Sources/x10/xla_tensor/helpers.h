@@ -28,7 +28,7 @@
 #include "xla/client/xla_builder.h"
 #include "xla/literal_util.h"
 #include "xla/types.h"
-#include "tensorflow/core/lib/bfloat16/bfloat16.h"
+#include "xla/types.h"
 
 namespace swift_xla {
 

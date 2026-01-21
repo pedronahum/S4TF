@@ -31,7 +31,7 @@
 #include "xla_tensor/swift_backtrace.h"
 #include "xla/client/xla_builder.h"
 #include "xla/xla_client/types.h"
-#include "tensorflow/core/lib/gtl/inlined_vector.h"
+#include "absl/container/inlined_vector.h"
 
 namespace swift_xla {
 namespace ir {

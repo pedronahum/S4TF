@@ -19,7 +19,7 @@
 
 #include "xla/statusor.h"
 #include "xla/xla_client/tf_logging.h"
-#include "tensorflow/core/platform/stacktrace.h"
+#include "absl/debugging/stacktrace.h"
 
 #define XLA_ERROR() TF_ERROR_STREAM()
 #define XLA_CHECK(c) TF_CHECK(c) << "\n" << tensorflow::CurrentStackTrace()

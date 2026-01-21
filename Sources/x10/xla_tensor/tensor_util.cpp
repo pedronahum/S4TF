@@ -30,7 +30,7 @@
 #include "xla_tensor/layout_manager.h"
 #include "xla/literal_util.h"
 #include "xla/shape_util.h"
-#include "tensorflow/core/lib/bfloat16/bfloat16.h"
+#include "xla/types.h"
 
 namespace swift_xla {
 namespace {

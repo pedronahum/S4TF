@@ -29,7 +29,7 @@
 #include "xla_tensor/ir_util.h"
 #include "xla/client/xla_builder.h"
 #include "xla/types.h"
-#include "tensorflow/core/platform/macros.h"
+#include "absl/base/macros.h"
 
 namespace swift_xla {
 namespace ir {

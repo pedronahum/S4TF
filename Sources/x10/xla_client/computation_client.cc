@@ -28,7 +28,7 @@
 #include "xla/xla_client/mesh_service.h"
 #include "xla/xla_client/sys_util.h"
 #include "xla/status_macros.h"
-#include "tensorflow/core/util/device_name_utils.h"
+#include "xla/xla_client/tf_compat.h"
 
 namespace xla {
 

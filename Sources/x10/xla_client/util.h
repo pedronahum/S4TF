@@ -33,8 +33,8 @@
 #include "absl/types/span.h"
 #include "xla/status.h"
 #include "xla/xla_client/types.h"
-#include "tensorflow/core/lib/core/errors.h"
-#include "tensorflow/core/lib/hash/hash.h"
+#include "absl/status/status.h"
+#include "absl/hash/hash.h"
 
 namespace xla {
 namespace util {
@@ -166,7 +166,7 @@ struct PartialHasher {
         pos = end - N;
       }
     }
-    return tensorflow::Hash64(data.data() + pos, end - pos, 17);
+    return absl::HashOf(data.data() + pos, end - pos, 17);
   }
 
   P policy;

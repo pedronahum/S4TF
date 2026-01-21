@@ -10,7 +10,7 @@
 #include "absl/container/node_hash_set.h"
 #include "absl/strings/str_split.h"
 #include "xla/xla_client/sys_util.h"
-#include "tensorflow/core/platform/stacktrace.h"
+#include "absl/debugging/stacktrace.h"
 #include "xla_tensor/swift_backtrace.h"
 
 namespace swift_xla {
