@@ -160,6 +160,73 @@ bazel build --config=openxla --config=tpu //xla_tensor:x10
 - `XLA_DEFAULT_DEVICE`: Override default device (e.g., "GPU:0")
 - `XLA_CPU_DEVICE_COUNT`: Number of CPU devices to create
 
+## Using Pre-built PJRT Plugins
+
+Instead of building from source, you can leverage pre-built PJRT plugins from
+Python packages like JAX or TensorFlow. This is the easiest way to get started.
+
+### Quick Start
+
+```bash
+# Install JAX (provides PJRT plugins)
+pip install jax[cpu]       # For CPU
+pip install jax[cuda12]    # For CUDA GPU
+
+# X10 will automatically find and use JAX's PJRT plugin
+export XLA_PLATFORM=cpu    # or "cuda" for GPU
+```
+
+### Finding Available Plugins
+
+Use the included helper script:
+
+```bash
+# Find all available plugins
+python scripts/find_pjrt_plugin.py
+
+# Find plugin for specific platform
+python scripts/find_pjrt_plugin.py cpu
+python scripts/find_pjrt_plugin.py cuda
+python scripts/find_pjrt_plugin.py tpu
+```
+
+### Plugin Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `XLA_USE_PREBUILT_PJRT` | Enable/disable plugin loading (default: true) |
+| `PJRT_CPU_LIBRARY_PATH` | Override CPU plugin path |
+| `PJRT_CUDA_LIBRARY_PATH` | Override CUDA plugin path |
+| `PJRT_GPU_LIBRARY_PATH` | Override GPU plugin path |
+| `PJRT_TPU_LIBRARY_PATH` | Override TPU plugin path |
+| `PJRT_PLUGIN_LIBRARY_PATH` | Generic plugin override |
+
+### Supported Python Packages
+
+| Package | CPU | CUDA | ROCm | TPU |
+|---------|-----|------|------|-----|
+| JAX (`jax[cpu]`) | Yes | - | - | - |
+| JAX (`jax[cuda12]`) | Yes | Yes | - | - |
+| JAX (`jax[rocm]`) | Yes | - | Yes | - |
+| JAX (`jax[tpu]`) | Yes | - | - | Yes |
+| TensorFlow | Yes | - | - | - |
+| TensorFlow (`tensorflow[and-cuda]`) | Yes | Yes | - | - |
+
+### How Plugin Loading Works
+
+When X10 initializes, it searches for PJRT plugins in this order:
+
+1. Environment variable override (e.g., `PJRT_CPU_LIBRARY_PATH`)
+2. Python site-packages (JAX, TensorFlow installations)
+3. `LD_LIBRARY_PATH` directories
+4. Fall back to compiled-in backends (if available)
+
+To disable automatic plugin loading and force compiled-in backends:
+
+```bash
+export XLA_USE_PREBUILT_PJRT=false
+```
+
 ## API Changes
 
 ### Device Initialization
@@ -201,6 +268,10 @@ auto results = device->ExecuteComputation(computation, arguments, options);
 - [x] Create TF compatibility headers
 - [x] Create WORKSPACE.openxla and MODULE.bazel
 - [x] Swift bindings verified unchanged (C interface stable)
+- [x] Add pre-built PJRT plugin support
+- [x] Create plugin discovery helper script
+- [x] Update documentation (README, Development.md)
+- [x] Create release notes
 - [ ] Test CPU backend
 - [ ] Test GPU backend
 - [ ] Test TPU backend
