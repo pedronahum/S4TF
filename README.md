@@ -1,5 +1,10 @@
 # Swift for TensorFlow Deep Learning Library
 
+> **Warning: Work in Progress**
+>
+> The OpenXLA migration in this repository is currently a **work in progress** and has **not been tested**.
+> The code is experimental and should not be used in production environments. Use at your own risk.
+
 Get a taste of *protocol-oriented differentiable programming*.
 
 This repository hosts [Swift for TensorFlow][s4tf]'s deep learning library,
