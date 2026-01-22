@@ -48,7 +48,7 @@ internal func checkOk(
   line: UInt = #line
 ) {
   internalConsistencyCheck(
-    TF_GetCode(s) == TF_OK,
+    TF_GetCode(s) == TSL_OK,
     String(cString: TF_Message(s)),
     file: file,
     line: line)
@@ -146,7 +146,7 @@ internal func debugLog(
 /// Given the address of a `TF_Buffer` and a file path, write the buffer's contents to the file.
 @usableFromInline
 internal func writeContents(of buffer: UnsafePointer<TF_Buffer>, toFile path: String) {
-  let fp = fopen(path, "w+")
+  guard let fp = fopen(path, "w+") else { return }
   fwrite(buffer.pointee.data, /*size*/ 1, /*count*/ buffer.pointee.length, fp)
   fclose(fp)
 }

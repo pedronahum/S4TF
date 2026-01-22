@@ -20,7 +20,7 @@ import _Differentiation
 
 extension Tensor where Scalar: TensorFlowFloatingPoint {
   /// Computes dropout given a probability.
-  @differentiable(wrt: self where Scalar: Differentiable)
+  @differentiable(reverse, wrt: self where Scalar: Differentiable)
   fileprivate func droppingOut(probability: Double) -> Tensor {
     let noise = Tensor(randomUniform: shape, on: device)
     let keepMask = noise .>= Scalar(probability)
@@ -34,10 +34,12 @@ extension Tensor where Scalar: TensorFlowFloatingPoint {
 /// Dropout consists in randomly setting a fraction of input units to `0` at each update during
 /// training time, which helps prevent overfitting.
 @frozen
-public struct Dropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct Dropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   @noDerivative public let probability: Double
+
+  public mutating func move(by direction: TangentVector) {}
 
   /// Creates a dropout layer.
   ///
@@ -54,7 +56,7 @@ public struct Dropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     switch Context.local.learningPhase {
     case .training:
@@ -68,10 +70,12 @@ public struct Dropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
 /// `GaussianNoise` adds noise sampled from a normal distribution.
 ///
 /// The noise added always has mean zero, but has a configurable standard deviation.
-public struct GaussianNoise<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct GaussianNoise<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   @noDerivative public let standardDeviation: Tensor<Scalar>
+
+  public mutating func move(by direction: TangentVector) {}
 
   /// Creates a Gaussian noise layer
   ///
@@ -81,7 +85,7 @@ public struct GaussianNoise<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer
   }
 
   /// Returns a tensor obtained by adding noise to `input`
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     switch Context.local.learningPhase {
     case .training:
@@ -99,11 +103,13 @@ public struct GaussianNoise<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer
 ///
 /// Because this is a regularization layer, it is only active during training time. During inference,
 /// `GaussianDropout` passes through the input unmodified.
-public struct GaussianDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct GaussianDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   @noDerivative public let probability: Scalar
   @noDerivative public let standardDeviation: Scalar
+
+  public mutating func move(by direction: TangentVector) {}
 
   /// Creates a Gaussian dropout layer.
   ///
@@ -118,7 +124,7 @@ public struct GaussianDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLay
   }
 
   /// Applies multiplicative 1-centered Gaussian noise to the input during training only.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     switch Context.local.learningPhase {
     case .training:
@@ -141,10 +147,12 @@ public struct GaussianDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLay
 ///
 /// Source : Self-Normalizing Neural Networks: https://arxiv.org/abs/1706.02515
 @frozen
-public struct AlphaDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct AlphaDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   @noDerivative public let probability: Double
+
+  public mutating func move(by direction: TangentVector) {}
 
   /// Initializes an `AlphaDropout` layer with a configurable `probability`.
   ///
@@ -158,7 +166,7 @@ public struct AlphaDropout<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer 
   }
 
   /// Adds noise to `input` during training, and is a no-op during inference.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     switch Context.local.learningPhase {
     case .training:

@@ -468,7 +468,7 @@ func _TFCOpAddInputFromTensorGroup<T: TensorArrayProtocol>(
   t._unpackTensorHandles(into: buffer.baseAddress)
   for handle in buffer {
     TFE_OpAddInput(op, handle, status)
-    guard TF_GetCode(status) == TF_OK else {
+    guard TF_GetCode(status) == TSL_OK else {
       return 0
     }
   }

@@ -123,6 +123,9 @@ func buildSwiftSettings() -> [SwiftSetting] {
         settings.append(.unsafeFlags(["-I\(includePath)"]))
     }
 
+    // Enable standard toolchain mode for differentiable programming
+    settings.append(.define("TENSORFLOW_USE_STANDARD_TOOLCHAIN"))
+
     return settings
 }
 
@@ -227,6 +230,7 @@ let package = Package(
             ],
             swiftSettings: [
                 .define("DEFAULT_BACKEND_EAGER"),
+                .define("TENSORFLOW_USE_STANDARD_TOOLCHAIN"),
             ]),
 
         // MARK: - Optimizers

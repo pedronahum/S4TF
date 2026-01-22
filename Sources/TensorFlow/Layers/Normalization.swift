@@ -23,7 +23,7 @@ import _Differentiation
 ///   - offset: The tensor to be added to normalized tensor.
 ///   - scale: The tensor to be applied to normalized tensor.
 ///   - varianceEpsilon: The small number to avoid dividing by 0.
-@differentiable(wrt: (input, mean, variance, offset, scale))
+@differentiable(reverse, wrt: (input, mean, variance, offset, scale))
 private func normalize<Scalar: TensorFlowFloatingPoint>(
   _ input: Tensor<Scalar>,
   mean: Tensor<Scalar>,
@@ -98,7 +98,7 @@ public struct BatchNorm<Scalar: TensorFlowFloatingPoint>: Layer {
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     let positiveAxis = (input.rank + axis) % input.rank
     precondition(
@@ -127,7 +127,7 @@ public struct BatchNorm<Scalar: TensorFlowFloatingPoint>: Layer {
     normalizedAxes.remove(at: axis)
     let moments = input.moments(alongAxes: normalizedAxes)
     let decayMomentum = Tensor(1 - momentum, on: input.device)
-    let isReducedPrecision = withoutDerivative(at: input) { $0.isReducedPrecision }
+    let isReducedPrecision = input.isReducedPrecision
     var momentsMean = moments.mean
     var momentsVariance = moments.variance
     if isReducedPrecision {
@@ -138,7 +138,7 @@ public struct BatchNorm<Scalar: TensorFlowFloatingPoint>: Layer {
     runningVariance.value += (momentsVariance - runningVariance.value) * decayMomentum
     // Note: `withoutDerivative(at:)` is currently needed in the following to prevent the resulting
     // tensor for `epsilon` from being scalarized on the backwards pass, breaking X10 traces.
-    let eps = withoutDerivative(at: input) { Tensor(epsilon, deviceAndPrecisionLike: $0) }
+    let eps = withoutDerivative(at: Tensor(epsilon, deviceAndPrecisionLike: input))
     return normalize(
       input,
       mean: moments.mean, variance: moments.variance,
@@ -149,12 +149,12 @@ public struct BatchNorm<Scalar: TensorFlowFloatingPoint>: Layer {
   private func doInference(
     _ input: Tensor<Scalar>, offset: Tensor<Scalar>, scale: Tensor<Scalar>
   ) -> Tensor<Scalar> {
-    let isReducedPrecision = withoutDerivative(at: input) { $0.isReducedPrecision }
+    let isReducedPrecision = input.isReducedPrecision
     let runningVarianceValue =
       isReducedPrecision ? runningVariance.value.toReducedPrecision : runningVariance.value
     let runningMeanValue =
       isReducedPrecision ? runningMean.value.toReducedPrecision : runningMean.value
-    let eps = withoutDerivative(at: input) { Tensor(epsilon, deviceAndPrecisionLike: $0) }
+    let eps = withoutDerivative(at: Tensor(epsilon, deviceAndPrecisionLike: input))
     return normalize(
       input,
       mean: runningMeanValue, variance: runningVarianceValue,
@@ -240,11 +240,11 @@ public struct LayerNorm<Scalar: TensorFlowFloatingPoint>: Layer {
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     // Note: `withoutDerivative(at:)` is currently needed in the following to prevent the resulting
     // tensor for `epsilon` from being scalarized on the backwards pass, breaking X10 traces.
-    let epsilon = withoutDerivative(at: input) { Tensor(self.epsilon, deviceAndPrecisionLike: $0) }
+    let epsilon = withoutDerivative(at: Tensor(self.epsilon, deviceAndPrecisionLike: input))
     let positiveAxis = (input.rank + axis) % input.rank
     precondition(
       input.shape[positiveAxis] == offset.shape[0],
@@ -341,7 +341,7 @@ public struct GroupNorm<Scalar: TensorFlowFloatingPoint>: Layer {
   /// - Returns: The output.
   /// - Precondition: The axis cannot be batch axis.
   /// - Precondition: The numbers of features of the input and the offset must be same.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     let positiveAxis = (input.rank + axis) % input.rank
     precondition(positiveAxis != 0, "The axis cannot be batch axis.")
@@ -365,7 +365,7 @@ public struct GroupNorm<Scalar: TensorFlowFloatingPoint>: Layer {
     let moments = grouped.moments(alongAxes: normalizedAxes)
     // Note: `withoutDerivative(at:)` is currently needed in the following to prevent the resulting
     // tensor for `epsilon` from being scalarized on the backwards pass, breaking X10 traces.
-    let eps = withoutDerivative(at: input) { Tensor(self.epsilon, deviceAndPrecisionLike: $0) }
+    let eps = withoutDerivative(at: Tensor(self.epsilon, deviceAndPrecisionLike: input))
     let normalized = normalize(
       grouped,
       mean: moments.mean, variance: moments.variance,
@@ -447,7 +447,7 @@ public struct InstanceNorm<Scalar: TensorFlowFloatingPoint>: Layer {
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse, wrt: self)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     delegate(input)
   }

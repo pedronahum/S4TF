@@ -54,7 +54,7 @@ public struct Embedding<Scalar: TensorFlowFloatingPoint>: Module {
   /// - Parameter
   ///   - input: The indices that will be mapped to their vector representations.
   /// - Returns: The tensor created by replacing input indices with their vector representations.
-  @differentiable(wrt: self)
+  @differentiable(reverse, wrt: self)
   public func forward(_ input: Tensor<Int32>) -> Tensor<Scalar> {
     embeddings.gathering(atIndices: input)
   }

@@ -18,17 +18,19 @@ import _Differentiation
 ///
 /// A flatten layer flattens the input when applied without affecting the batch size.
 @frozen
-public struct Flatten<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct Flatten<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   /// Creates a flatten layer.
   public init() {}
 
+  public mutating func move(by direction: TangentVector) {}
+
   /// Returns the output obtained from applying the layer to the given input.
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     let batchSize = input.shape[0]
     let remaining = input.shape[1..<input.rank].contiguousSize
@@ -38,15 +40,17 @@ public struct Flatten<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
 
 /// A reshape layer.
 @frozen
-public struct Reshape<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
+public struct Reshape<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
 
   /// The target shape.
   @noDerivative public var shape: Tensor<Int32>
 
   // TF-331 workaround:
-  @usableFromInline
+  @noDerivative @usableFromInline
   internal var _nontrivial = Tensor<Float>(0)
+
+  public mutating func move(by direction: TangentVector) {}
 
   /// Creates a reshape layer.
   ///
@@ -66,16 +70,16 @@ public struct Reshape<Scalar: TensorFlowFloatingPoint>: ParameterlessLayer {
   ///
   /// - Parameter input: The input to the layer.
   /// - Returns: The output.
-  @differentiable
+  @differentiable(reverse)
   public func forward(_ input: Tensor<Scalar>) -> Tensor<Scalar> {
     return input.reshaped(toShape: shape)
   }
 }
 
 /// A layer that encloses a custom differentiable function.
-public struct Function<Input: Differentiable, Output: Differentiable>: ParameterlessLayer {
+public struct Function<Input: Differentiable, Output: Differentiable>: ParameterlessLayer, Differentiable {
   public typealias TangentVector = EmptyTangentVector
-  public typealias Body = @differentiable (Input) -> Output
+  public typealias Body = @differentiable(reverse) (Input) -> Output
 
   @noDerivative public let body: Body
 
@@ -83,8 +87,21 @@ public struct Function<Input: Differentiable, Output: Differentiable>: Parameter
     self.body = body
   }
 
-  @differentiable
+  public mutating func move(by direction: TangentVector) {}
+
+  @differentiable(reverse)
   public func callAsFunction(_ input: Input) -> Output {
     body(input)
+  }
+}
+
+// MARK: - Manual derivatives for Function (avoid compiler crash)
+extension Function {
+  @derivative(of: callAsFunction, wrt: input)
+  public func _vjpCallAsFunction(_ input: Input)
+    -> (value: Output, pullback: (Output.TangentVector) -> Input.TangentVector)
+  {
+    let (y, pb) = valueWithPullback(at: input, of: body)
+    return (y, pb)
   }
 }
